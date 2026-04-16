@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KAMYON BAKIM TAKİP SİSTEMİ</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c0f;--surface:#111318;--surface2:#181c24;--border:#1e2430;
+  --accent:#f0a500;--accent2:#e05c00;--text:#d4dbe8;--text-dim:#5a6478;
+  --text-muted:#2e3545;--green:#00c97a;--red:#ff4444;--blue:#2e9cff;--orange:#ff8c00;--purple:#9b59ff;
+  --font-display:'Bebas Neue',sans-serif;--font-mono:'IBM Plex Mono',monospace;--font-body:'IBM Plex Sans',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden;}
+#ls{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:2000;flex-direction:column;gap:20px;}
+.ll{font-family:var(--font-display);font-size:52px;letter-spacing:6px;color:var(--accent);}
+.lbw{width:300px;height:2px;background:var(--border);overflow:hidden;}
+.lb{height:100%;background:var(--accent);animation:lb 1.5s ease-in-out infinite;}
+@keyframes lb{0%{width:0;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0;margin-left:100%}}
+.lt{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);letter-spacing:3px;}
+#sync-bar{position:fixed;top:0;left:0;right:0;height:2px;background:var(--accent);z-index:9999;display:none;animation:sp 1s infinite;}
+@keyframes sp{0%,100%{opacity:1}50%{opacity:0.3}}
+#sync-lbl{position:fixed;top:6px;right:14px;font-family:var(--font-mono);font-size:9px;color:var(--accent);z-index:9999;display:none;letter-spacing:2px;}
+#login{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:1000;flex-direction:column;gap:40px;}
+.logo{font-family:var(--font-display);font-size:48px;letter-spacing:6px;color:var(--accent);text-align:center;line-height:1;}
+.logo span{color:var(--text-dim);font-size:13px;font-family:var(--font-mono);display:block;letter-spacing:4px;margin-top:8px;}
+.lbox{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--accent);padding:36px;width:340px;}
+.lbox h2{font-family:var(--font-mono);font-size:11px;letter-spacing:3px;color:var(--text-dim);text-transform:uppercase;margin-bottom:24px;}
+.lf{margin-bottom:16px;}
+.lf label{display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;}
+.lf input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:11px 14px;font-family:var(--font-mono);font-size:13px;outline:none;transition:border-color 0.2s;}
+.lf input:focus{border-color:var(--accent);}
+.lbtn{width:100%;background:var(--accent);color:#000;border:none;padding:13px;font-family:var(--font-display);font-size:18px;letter-spacing:4px;cursor:pointer;margin-top:8px;transition:background 0.2s;}
+.lbtn:hover{background:var(--accent2);color:#fff;}
+.lerr{color:var(--red);font-family:var(--font-mono);font-size:11px;margin-top:10px;display:none;}
+#app{display:none;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);height:56px;display:flex;align-items:center;padding:0 20px;gap:16px;position:sticky;top:0;z-index:100;}
+.tlogo{font-family:var(--font-display);font-size:22px;letter-spacing:4px;color:var(--accent);flex-shrink:0;}
+.tdiv{width:1px;height:26px;background:var(--border);}
+.ntabs{display:flex;gap:3px;flex:1;flex-wrap:wrap;}
+.ntab{padding:6px 13px;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;cursor:pointer;border:1px solid transparent;color:var(--text-dim);transition:all 0.15s;background:none;text-transform:uppercase;}
+.ntab:hover{color:var(--text);border-color:var(--border);}
+.ntab.active{color:var(--accent);border-color:var(--accent);background:rgba(240,165,0,0.07);}
+.tuser{margin-left:auto;display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11px;color:var(--text-dim);}
+.ubdg{padding:3px 9px;font-size:9px;letter-spacing:1px;text-transform:uppercase;}
+.badmin{background:rgba(240,165,0,0.15);color:var(--accent);border:1px solid var(--accent);}
+.bview{background:rgba(46,156,255,0.1);color:var(--blue);border:1px solid var(--blue);}
+.obtn{background:none;border:1px solid var(--border);color:var(--text-dim);padding:4px 10px;font-family:var(--font-mono);font-size:9px;cursor:pointer;transition:all 0.2s;}
+.obtn:hover{border-color:var(--red);color:var(--red);}
+.mc{padding:24px;max-width:1440px;margin:0 auto;}
+.ph{margin-bottom:24px;display:flex;align-items:flex-end;gap:16px;border-bottom:1px solid var(--border);padding-bottom:16px;}
+.pt{font-family:var(--font-display);font-size:38px;letter-spacing:4px;color:var(--text);line-height:1;}
+.pt span{color:var(--accent);}
+.ps{font-family:var(--font-mono);font-size:10px;color:var(--text-dim);letter-spacing:2px;margin-bottom:3px;}
+.filters{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
+.srch{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 14px;font-family:var(--font-mono);font-size:12px;outline:none;flex:1;min-width:200px;transition:border-color 0.2s;}
+.srch:focus{border-color:var(--accent);}
+.fsel{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;font-family:var(--font-mono);font-size:11px;outline:none;cursor:pointer;}
+.fbtn{background:var(--accent);color:#000;border:none;padding:8px 18px;font-family:var(--font-display);font-size:14px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;}
+.fbtn:hover{background:var(--accent2);color:#fff;}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px;}
+.sc{background:var(--surface);border:1px solid var(--border);padding:14px;position:relative;overflow:hidden;}
+.sc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent);opacity:0.3;}
+.sl{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:6px;}
+.sv{font-family:var(--font-display);font-size:28px;letter-spacing:2px;color:var(--accent);line-height:1;}
+.su{font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:3px;}
+.vtable-wrap{overflow-x:auto;}
+.vtable{width:100%;border-collapse:collapse;}
+.vtable th{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);text-transform:uppercase;background:var(--bg);white-space:nowrap;}
+.vtable td{padding:10px 12px;border-bottom:1px solid var(--text-muted);font-family:var(--font-mono);font-size:11px;color:var(--text);white-space:nowrap;}
+.vtable tr:hover td{background:var(--surface2);}
+.vtable tr.row-urgent td{background:rgba(255,68,68,0.04);}
+.vtable tr.row-warn td{background:rgba(255,140,0,0.04);}
+.td-r{text-align:right;}
+.td-acc{color:var(--accent);font-weight:600;}
+.td-grn{color:var(--green);}
+.td-red{color:var(--red);}
+.td-ora{color:var(--orange);}
+.td-blue{color:var(--blue);}
+.td-dim{color:var(--text-dim);}
+.badge{display:inline-block;padding:2px 7px;font-family:var(--font-mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;border:1px solid;}
+.badge-ok{color:var(--green);border-color:var(--green);background:rgba(0,201,122,0.08);}
+.badge-warn{color:var(--orange);border-color:var(--orange);background:rgba(255,140,0,0.08);}
+.badge-urgent{color:var(--red);border-color:var(--red);background:rgba(255,68,68,0.08);}
+/* DETAIL OVERLAY */
+.detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+.detail-overlay.show{display:flex;}
+.detail-box{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent);width:100%;max-width:780px;margin:auto;}
+.detail-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border);}
+.detail-title{font-family:var(--font-display);font-size:24px;letter-spacing:3px;color:var(--accent);}
+.detail-sub{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);margin-top:3px;}
+.close-btn{background:none;border:1px solid var(--border);color:var(--text-dim);padding:6px 12px;font-family:var(--font-mono);font-size:11px;cursor:pointer;transition:all 0.15s;}
+.close-btn:hover{border-color:var(--red);color:var(--red);}
+.detail-body{padding:20px 24px;}
+/* TABS inside detail */
+.dtabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0;}
+.dtab{padding:8px 16px;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;cursor:pointer;border:1px solid transparent;color:var(--text-dim);transition:all 0.15s;background:none;text-transform:uppercase;border-bottom:none;margin-bottom:-1px;}
+.dtab:hover{color:var(--text);}
+.dtab.active{color:var(--accent);border-color:var(--border);border-bottom-color:var(--surface);background:var(--surface);}
+.dpanel{display:none;}
+.dpanel.active{display:block;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.di{background:var(--bg);border:1px solid var(--border);padding:12px 14px;}
+.di-label{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:5px;}
+.di-val{font-family:var(--font-mono);font-size:13px;color:var(--text);}
+.di-val.accent{color:var(--accent);}
+.di-val.green{color:var(--green);}
+.di-val.red{color:var(--red);}
+.di-val.orange{color:var(--orange);}
+.prog-wrap{margin-bottom:16px;}
+.prog-label{font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-bottom:5px;display:flex;justify-content:space-between;}
+.prog-bar{height:5px;background:var(--border);position:relative;overflow:hidden;}
+.prog-fill{height:100%;transition:width 0.5s ease;}
+/* CARİ KARTI */
+.cari-section{margin-bottom:20px;}
+.cari-title{font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.cari-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.cari-table{width:100%;border-collapse:collapse;}
+.cari-table th{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);text-transform:uppercase;background:var(--bg);}
+.cari-table td{padding:9px 10px;border-bottom:1px solid var(--text-muted);font-family:var(--font-mono);font-size:11px;color:var(--text);}
+.cari-table tr:hover td{background:var(--surface2);}
+.cari-table .ct-isim{color:var(--text);min-width:200px;}
+.cari-table .ct-parca{color:var(--blue);font-size:10px;}
+.cari-table .ct-adet{color:var(--accent);text-align:right;white-space:nowrap;}
+.ct-badge{display:inline-block;padding:1px 6px;font-family:var(--font-mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;border:1px solid;margin-right:4px;}
+.ct-f{color:var(--purple);border-color:var(--purple);background:rgba(155,89,255,0.08);}
+.ct-y{color:var(--blue);border-color:var(--blue);background:rgba(46,156,255,0.08);}
+.not-box{background:rgba(240,165,0,0.08);border:1px solid rgba(240,165,0,0.3);padding:10px 14px;margin-top:10px;}
+.not-box p{font-family:var(--font-mono);font-size:10px;color:var(--accent);line-height:1.6;}
+.not-box p::before{content:"⚠ ";}
+/* UPDATE FORM */
+.update-form{background:var(--bg);border:1px solid var(--border);padding:16px;margin-top:12px;}
+.update-form h4{font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.fi label{display:block;font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;}
+.fi input,.fi select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 10px;font-family:var(--font-mono);font-size:12px;outline:none;transition:border-color 0.2s;color-scheme:dark;}
+.fi input:focus{border-color:var(--accent);}
+.upbtn{background:var(--accent);color:#000;border:none;padding:10px 24px;font-family:var(--font-display);font-size:15px;letter-spacing:3px;cursor:pointer;transition:all 0.2s;}
+.upbtn:hover{background:var(--accent2);color:#fff;}
+/* HISTORY */
+.hist-section{margin-top:16px;}
+.hist-title{font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.hist-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.ht{width:100%;border-collapse:collapse;}
+.ht th{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);text-transform:uppercase;background:var(--bg);white-space:nowrap;}
+.ht td{padding:8px 10px;border-bottom:1px solid var(--text-muted);font-family:var(--font-mono);font-size:10px;color:var(--text);white-space:nowrap;}
+.ht tr:hover td{background:var(--surface2);}
+.delbtn{background:none;border:1px solid var(--border);color:var(--text-dim);padding:2px 7px;font-family:var(--font-mono);font-size:8px;cursor:pointer;transition:all 0.15s;}
+.delbtn:hover{border-color:var(--red);color:var(--red);}
+/* ADMIN */
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.as{background:var(--surface);border:1px solid var(--border);padding:20px;}
+.as h3{font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.ul{display:flex;flex-direction:column;gap:6px;}
+.ui{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg);border:1px solid var(--border);}
+.un{font-family:var(--font-mono);font-size:11px;flex:1;}
+.ur{font-family:var(--font-mono);font-size:9px;padding:2px 7px;border:1px solid;}
+.ra{color:var(--accent);border-color:var(--accent);}
+.rv{color:var(--blue);border-color:var(--blue);}
+.dub{background:none;border:1px solid var(--border);color:var(--text-dim);padding:3px 8px;font-family:var(--font-mono);font-size:8px;cursor:pointer;transition:all 0.15s;}
+.dub:hover{border-color:var(--red);color:var(--red);}
+.auf{display:flex;flex-direction:column;gap:12px;}
+.auf input,.auf select{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-family:var(--font-mono);font-size:12px;outline:none;appearance:none;}
+.auf input:focus{border-color:var(--accent);}
+.aub{background:var(--accent);color:#000;border:none;padding:10px;font-family:var(--font-display);font-size:15px;letter-spacing:3px;cursor:pointer;transition:all 0.2s;}
+.aub:hover{background:var(--accent2);color:#fff;}
+.sysinfo{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);line-height:2.2;}
+.nd{text-align:center;padding:40px;font-family:var(--font-mono);font-size:12px;color:var(--text-dim);letter-spacing:2px;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);}
+::-webkit-scrollbar-thumb:hover{background:var(--accent);}
+.tab-section{display:none;}
+.tab-section.active{display:block;}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--green);color:var(--green);padding:12px 20px;font-family:var(--font-mono);font-size:11px;letter-spacing:1px;z-index:9999;display:none;animation:tsi 0.3s ease;}
+#toast.e{border-color:var(--red);color:var(--red);}
+@keyframes tsi{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+@media(max-width:900px){.admin-grid{grid-template-columns:1fr;}.detail-grid,.form-grid{grid-template-columns:1fr;}.topbar{flex-wrap:wrap;height:auto;padding:10px;}}
+@media print{.topbar,#toast,#sync-bar,#sync-lbl,.detail-overlay,.filters{display:none!important;}}
+</style>
+</head>
+<body>
+<div id="ls"><div class="ll">KBT</div><div class="lbw"><div class="lb"></div></div><div class="lt" id="ltxt">// FIREBASE BAĞLANIYOR...</div></div>
+<div id="sync-bar"></div><div id="sync-lbl">● CANLI</div>
+<div id="login">
+  <div class="logo">KAMYON BAKIM<span>TAKİP SİSTEMİ v2.0</span></div>
+  <div class="lbox">
+    <h2>// SİSTEM GİRİŞİ</h2>
+    <div class="lf"><label>Kullanıcı Adı</label><input type="text" id="lu" placeholder="kullanici_adi" autocomplete="off"></div>
+    <div class="lf"><label>Şifre</label><input type="password" id="lp" placeholder="••••••••"></div>
+    <button class="lbtn" id="lbtn">GİRİŞ YAP</button>
+    <div class="lerr" id="lerr">Kullanıcı adı veya şifre yanlış</div>
+  </div>
+</div>
+<div id="app">
+  <div class="topbar">
+    <div class="tlogo">KBT</div><div class="tdiv"></div>
+    <div class="ntabs">
+      <button class="ntab active" data-tab="tab-mrc">🚛 MERCEDES</button>
+      <button class="ntab" data-tab="tab-rn">🚚 RENAULT</button>
+      <button class="ntab" data-tab="tab-vl">🔵 VOLVO</button>
+      <button class="ntab" data-tab="tab-az">🚒 ARAZÖZ</button>
+      <button class="ntab" data-tab="tab-report">📊 RAPOR</button>
+      <button class="ntab" data-tab="tab-admin" id="atab" style="display:none">🔐 YÖNETİM</button>
+    </div>
+    <div class="tuser"><span id="tun"></span><span class="ubdg" id="tbdg"></span><button class="obtn" id="lout">ÇIKIŞ</button></div>
+  </div>
+  <div class="mc">
+    <div class="tab-section active" id="tab-mrc">
+      <div class="ph"><div><div class="ps">// MERCEDES ARAÇLARI</div><div class="pt"><span>MERCEDES</span> FİLOSU</div></div></div>
+      <div class="filters">
+        <input type="text" class="srch" id="srch-mrc" placeholder="Plaka, kod veya model ara..." oninput="renderTable('mrc')">
+        <select class="fsel" id="fsel-mrc" onchange="renderTable('mrc')"><option value="all">Tüm Durumlar</option><option value="urgent">ACİL</option><option value="warn">YAKLAŞAN</option><option value="ok">NORMAL</option></select>
+      </div>
+      <div class="stats-row" id="stats-mrc"></div>
+      <div class="vtable-wrap"><table class="vtable"><thead id="thead-mrc"></thead><tbody id="tbody-mrc"></tbody></table></div>
+    </div>
+    <div class="tab-section" id="tab-rn">
+      <div class="ph"><div><div class="ps">// RENAULT ARAÇLARI</div><div class="pt"><span>RENAULT</span> FİLOSU</div></div></div>
+      <div class="filters">
+        <input type="text" class="srch" id="srch-rn" placeholder="Plaka, kod veya model ara..." oninput="renderTable('rn')">
+        <select class="fsel" id="fsel-rn" onchange="renderTable('rn')"><option value="all">Tüm Durumlar</option><option value="urgent">ACİL</option><option value="warn">YAKLAŞAN</option><option value="ok">NORMAL</option></select>
+      </div>
+      <div class="stats-row" id="stats-rn"></div>
+      <div class="vtable-wrap"><table class="vtable"><thead id="thead-rn"></thead><tbody id="tbody-rn"></tbody></table></div>
+    </div>
+    <div class="tab-section" id="tab-vl">
+      <div class="ph"><div><div class="ps">// VOLVO ARAÇLARI</div><div class="pt"><span>VOLVO</span> FİLOSU</div></div></div>
+      <div class="filters">
+        <input type="text" class="srch" id="srch-vl" placeholder="Plaka, kod veya model ara..." oninput="renderTable('vl')">
+        <select class="fsel" id="fsel-vl" onchange="renderTable('vl')"><option value="all">Tüm Durumlar</option><option value="urgent">ACİL</option><option value="warn">YAKLAŞAN</option><option value="ok">NORMAL</option></select>
+      </div>
+      <div class="stats-row" id="stats-vl"></div>
+      <div class="vtable-wrap"><table class="vtable"><thead id="thead-vl"></thead><tbody id="tbody-vl"></tbody></table></div>
+    </div>
+    <div class="tab-section" id="tab-az">
+      <div class="ph"><div><div class="ps">// ARAZÖZ ARAÇLARI</div><div class="pt"><span>ARAZÖZ</span> FİLOSU</div></div></div>
+      <div class="filters">
+        <input type="text" class="srch" id="srch-az" placeholder="Plaka, kod ara..." oninput="renderTable('az')">
+        <select class="fsel" id="fsel-az" onchange="renderTable('az')"><option value="all">Tüm Durumlar</option><option value="urgent">ACİL</option><option value="warn">YAKLAŞAN</option><option value="ok">NORMAL</option></select>
+      </div>
+      <div class="stats-row" id="stats-az"></div>
+      <div class="vtable-wrap"><table class="vtable"><thead id="thead-az"></thead><tbody id="tbody-az"></tbody></table></div>
+    </div>
+    <div class="tab-section" id="tab-report">
+      <div class="ph"><div><div class="ps">// ANALİZ & RAPORLAMA</div><div class="pt">RAPOR <span>PANELİ</span></div></div></div>
+      <div id="report-content"></div>
+    </div>
+    <div class="tab-section" id="tab-admin">
+      <div class="ph"><div><div class="ps">// SİSTEM YÖNETİMİ</div><div class="pt">ADMİN <span>PANELİ</span></div></div></div>
+      <div class="admin-grid">
+        <div class="as"><h3>// KULLANICI LİSTESİ</h3><div class="ul" id="ulist"></div></div>
+        <div class="as"><h3>// YENİ KULLANICI</h3>
+          <div class="auf">
+            <input type="text" id="nu" placeholder="Kullanıcı adı">
+            <input type="password" id="np" placeholder="Şifre">
+            <select id="nr"><option value="viewer">İzleyici</option><option value="admin">Admin</option></select>
+            <button class="aub" id="aubtn">KULLANICI EKLE</button>
+          </div>
+        </div>
+        <div class="as"><h3>// VERİ YÖNETİMİ</h3>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button class="fbtn" id="expbtn">📥 VERİYİ DIŞA AKTAR</button>
+            <button class="fbtn" id="clrbtn" style="background:var(--surface);color:var(--red);border:1px solid var(--red)">🗑 TÜM GÜNCELLEMELERİ SİL</button>
+          </div>
+        </div>
+        <div class="as"><h3>// SİSTEM BİLGİSİ</h3><div class="sysinfo" id="sysinfo"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL OVERLAY -->
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-box">
+    <div class="detail-header">
+      <div><div class="detail-title" id="d-title"></div><div class="detail-sub" id="d-sub"></div></div>
+      <button class="close-btn" onclick="closeDetail()">✕ KAPAT</button>
+    </div>
+    <div class="detail-body">
+      <div class="dtabs">
+        <button class="dtab active" onclick="switchDTab('bakim',this)">📊 BAKIM TAKİP</button>
+        <button class="dtab" onclick="switchDTab('cari',this)">🔧 CARİ KART</button>
+        <button class="dtab" onclick="switchDTab('guncelle',this)">✏ GÜNCELLE</button>
+      </div>
+      <div class="dpanel active" id="dpanel-bakim"></div>
+      <div class="dpanel" id="dpanel-cari"></div>
+      <div class="dpanel" id="dpanel-guncelle"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const CARI_DATA = {"72 ABP 707":{"sheet":"MRC 72 ABP 707 -1","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":["MOTOR SAATİ: 750 SAAT !!!"]},"06 FAJ 084":{"sheet":" RENAULT 06 FAJ 084-2","sase":"","filtreler":[{"isim":"KURUTUCU FİLTRESİ","parca_no":"7423690621","adet":"1.0"}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518","adet":"2.0"},{"isim":"MOTOR YAĞI 5W30","parca_no":"36","adet":"2.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"KULE DÖNÜŞ CER YAĞI 80/90","parca_no":"","adet":""},{"isim":"YÜRÜYÜŞ CER YAĞI 80/90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":["MOTOR SAATİ: 750 SAAT !!!","not 29.05.2025 tarihinde yağ basınc poması garantiden değişti."]},"72 ABP 670":{"sheet":"MRC 72 ABP 670-5","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 10W40","parca_no":"","adet":"45 L"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":[]},"72 ABP 690":{"sheet":"72 ABP 690-6","sase":"","filtreler":[{"isim":"KURUTUCU FİLTRESİ","parca_no":"","adet":""}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":[]},"72 ABP 688":{"sheet":"72 ABP 688 - (7)","sase":"","filtreler":[{"isim":"KURUTUCU FİLTRESİ","parca_no":"","adet":""},{"isim":"DİREKSİYON FİLTRESİ","parca_no":"","adet":""}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 10W40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""}],"notlar":[]},"06 FAJ 471":{"sheet":"RENAULT 06 FAJ 471 -8","sase":"","filtreler":[{"isim":"DİREKSİYON FİLTRESİ","parca_no":"","adet":""},{"isim":"KURUTUCU FİLTRESİ","parca_no":"7423690621","adet":"1.0"}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518","adet":"2.0"},{"isim":"MOTOR YAĞI 5W30","parca_no":"","adet":"36.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"KULE DÖNÜŞ CER YAĞI 80/90","parca_no":"","adet":""},{"isim":"YÜRÜYÜŞ CER YAĞI 80/90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":["not 29.05.2025 tarihinde yağ basınc poması garantiden değişti."]},"72 ABL 339":{"sheet":"VOLVO 72 ABL 339-9","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRESİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 5W30","parca_no":"","adet":"40 LT"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI /7590","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI 80-90","parca_no":"","adet":""},{"isim":"CER YAĞI 80-90","parca_no":"","adet":""}],"notlar":["MOTOR SAATİ: 750 SAAT !!!","NOT: ŞANZUMAN CER VE DEFRANSİYEL YAĞLARI 4000 SAAT"]},"72 ABL 338":{"sheet":"VOLVO 72 ABL 338 -10","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRESİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 5W30","parca_no":"","adet":"40 LT"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI /7590","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI 80-90","parca_no":"","adet":""},{"isim":"CER YAĞI 80-90","parca_no":"","adet":""}],"notlar":[]},"20 ADG 114":{"sheet":"4145 MRC 20 ADG 114-11","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 15/40","parca_no":"40.0","adet":""},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""}],"notlar":[]},"06 EAT 660":{"sheet":"4851 06 EAT 660 -12 ","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"A0001807065","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""}],"notlar":[]},"72 ABL 929":{"sheet":"VOLVO 72 ABL 929-13","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRESİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 5W30","parca_no":"","adet":""},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI /7590","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI 80-90","parca_no":"","adet":""},{"isim":"CER YAĞI 80-90","parca_no":"","adet":""}],"notlar":[]},"72 ABL 941":{"sheet":"VOLVO 72 ABL 941-14","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 15/40","parca_no":"","adet":""},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"KULE DÖNÜŞ CER YAĞI 80/90","parca_no":"","adet":""},{"isim":"YÜRÜYÜŞ CER YAĞI 80/90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":[]},"06 EAT 638":{"sheet":"06 EAT 638-15","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"A0001807065","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":[]},"06 EAT 689":{"sheet":"06 EAT 689-16","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"A0001807065","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":[]},"72 ABP 669":{"sheet":"72 ABP 669-17","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"","adet":""},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":[]},"06 EAT 663":{"sheet":"06 EAT 663-18","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"A0001807065","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":[]},"06 EAT 701":{"sheet":"06 EAT 701-19","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"A0001807065","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":[]},"72 ABP 713":{"sheet":"72 ABP 713-20","sase":"","filtreler":[{"isim":"DİREKSİYON FİLTRESİ","parca_no":"","adet":""},{"isim":"KURUTUCU FİLTRESİ","parca_no":"","adet":""}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 10W40","parca_no":"","adet":""},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":["DİFERANSİYEL VE YAĞI 20.12.2025 TE DEĞİŞTİ"]},"72 ABP 668":{"sheet":"72 ABP 668-21","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 15/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":[]},"06 EAT 635":{"sheet":"06 EAT 635-22","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"A0001807065","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":[]},"72 ABP 687":{"sheet":"72 ABP 687-23","sase":"","filtreler":[{"isim":"DİREKSİYON FİLTRESİ","parca_no":"","adet":""}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":[]},"72 ABP 691":{"sheet":"72 ABP 691-24","sase":"","filtreler":[{"isim":"DİREKSİYON FİLTRESİ","parca_no":"","adet":""}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""},{"isim":"HİDROLİK YAĞI 46 NUMARA","parca_no":"","adet":""}],"notlar":[]},"72 ABL 343":{"sheet":"VOLVO 72 ABL 343-25","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRESİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 5W30","parca_no":"","adet":""},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI /7590","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI 80-90","parca_no":"","adet":""},{"isim":"CER YAĞI 80-90","parca_no":"","adet":""}],"notlar":[]},"06 EBU 872":{"sheet":"06 EBU 872-26","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518.0","adet":"2.0"},{"isim":"MOTOR YAĞI 5W30","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"06 ECP 343":{"sheet":"06 ECP 343-27","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518.0","adet":"2.0"},{"isim":"MOTOR YAĞI 15/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"06 ECL 480":{"sheet":"06 ECL 480-28","sase":"","filtreler":[{"isim":"DİREKSİYON FİLTRESİ","parca_no":"","adet":""},{"isim":"KURUTUCU FİLTRESİ","parca_no":"7423690621.0","adet":"1.0"}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518.0","adet":"2.0"},{"isim":"MOTOR YAĞI 5W30","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"06 ECN 357":{"sheet":"06 ECN 357-29","sase":"","filtreler":[{"isim":"DİREKSİYON FİLTRESİ","parca_no":"","adet":""},{"isim":"KURUTUCU FİLTRESİ","parca_no":"7423690621.0","adet":"1.0"}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518.0","adet":"2.0"},{"isim":"MOTOR YAĞI 15/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"06 ECP 316":{"sheet":"06 ECP 316-30","sase":"","filtreler":[{"isim":"KURUTUCU FİLTRESİ","parca_no":"7423690621.0","adet":"1.0"}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518.0","adet":"2.0"},{"isim":"MOTOR YAĞI 5W30","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"06 EFA 637":{"sheet":"06 EFA 637-31","sase":"","filtreler":[{"isim":"KURUTUCU FİLTRESİ","parca_no":"7423690621.0","adet":"1.0"}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518.0","adet":"2.0"},{"isim":"MOTOR YAĞI 5W30","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"06 EFB 132":{"sheet":"06 EFB 132-32","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518.0","adet":""},{"isim":"MOTOR YAĞI 15/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"06 EGF 523":{"sheet":"06 EGF 523-33","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"A0001807065","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""}],"notlar":[]},"06 EGF 556":{"sheet":"06 EGF 556-34","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"A0001807065","adet":""},{"isim":"MOTOR YAĞI 15/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""}],"notlar":[]},"06 FEH 920":{"sheet":"06 FEH 920-35","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"A0001807065","adet":""},{"isim":"MOTOR YAĞI 15/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""}],"notlar":[]},"06 EGF 589":{"sheet":"06 EGF 589-36","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"A0001807065","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""}],"notlar":[]},"06 FAH 784":{"sheet":"06 FAH 784-37","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518","adet":"2.0"},{"isim":"MOTOR YAĞI 5W30","parca_no":"36","adet":"2.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":["not 29.05.2025 tarihinde yağ basınc poması garantiden değişti."]},"06 FAH 630":{"sheet":"06 FAH 630-38","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518","adet":"2.0"},{"isim":"MOTOR YAĞI 5W30","parca_no":"","adet":"36.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":["not 29.05.2025 tarihinde yağ basınc poması garantiden değişti."]},"21 ABF 580":{"sheet":"21 ABF 580-40","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"","adet":"40.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""}],"notlar":[]},"06 FAH 940":{"sheet":"06 FAH 940-39","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518","adet":"2.0"},{"isim":"MOTOR YAĞI 5W30","parca_no":"36","adet":"2.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":["not 29.05.2025 tarihinde yağ basınc poması garantiden değişti."]},"21 ABD 578":{"sheet":"21 ABD 578-41","sase":"","filtreler":[{"isim":"KURUTUCU FİLTRESİ","parca_no":"","adet":""}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 10W 40","parca_no":"","adet":""},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""}],"notlar":[]},"06 DCB 186":{"sheet":"06 DCB 186-47","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 10W/40","parca_no":"42.0","adet":""},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"DİFERANSİYEL YAĞI 80W90","parca_no":"","adet":""},{"isim":"ŞANZUMAN YAĞI 75W90","parca_no":"","adet":""}],"notlar":[]},"34 BKU 582":{"sheet":"34 BKU 582 -3","sase":"","filtreler":[],"yaglar":[],"notlar":[]},"20 ADG 112":{"sheet":"20 ADG 112 -15","sase":"","filtreler":[],"yaglar":[],"notlar":[]},"07 ANJ 398":{"sheet":"07 ANJ 398","sase":"","filtreler":[],"yaglar":[],"notlar":[]},"72 ABU 389":{"sheet":"72 ABU 389 LOWBET","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 5W30","parca_no":"40.0","adet":""},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"72 ACR 237":{"sheet":"72 ACR 237 (45)","sase":"","filtreler":[{"isim":"DİREKSİYON FİLTRESİ","parca_no":"","adet":""}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518","adet":"2.0"},{"isim":"MOTOR YAĞI 5W30","parca_no":"36","adet":"2.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"72 ACR 236":{"sheet":"72 ACR 236 (46)","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518","adet":"2.0"},{"isim":"MOTOR YAĞI 5W30","parca_no":"36","adet":"2.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"72 ACR 233":{"sheet":"72 ACR 233 (47)","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518","adet":"2.0"},{"isim":"MOTOR YAĞI 5W30","parca_no":"36","adet":"2.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"72 ACR 231":{"sheet":"72 ACR 231 (48)","sase":"","filtreler":[{"isim":"DİREKSİYON FİLTRESİ","parca_no":"","adet":"1.0"}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518","adet":"2.0"},{"isim":"MOTOR YAĞI 5W30","parca_no":"36","adet":"2.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"72 ACR 234":{"sheet":"72 ACR 234 (49)","sase":"","filtreler":[{"isim":"DİREKSİYON FİLTRESİ","parca_no":"","adet":"1.0"}],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"7423759518","adet":"2.0"},{"isim":"MOTOR YAĞI 5W30","parca_no":"36","adet":"2.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"06 CGE 606":{"sheet":"06 CGE 606 SU TANKERİ","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 10W40","parca_no":"45.0","adet":""},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"34 ELV 435":{"sheet":"34 ELV 435 SU TANKERİ","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 5W30","parca_no":"","adet":""},{"isim":"ANTİFİRİZ","parca_no":"","adet":""},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":""},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]},"06 CHU 161":{"sheet":"06 CHU 161 SU TANKERİ","sase":"","filtreler":[],"yaglar":[{"isim":"MOTOR YAĞ FİLİTRELERİ","parca_no":"","adet":""},{"isim":"MOTOR YAĞI 5W30","parca_no":"","adet":"48.0"},{"isim":"ANTİFİRİZ","parca_no":"","adet":"30.0"},{"isim":"DİREKSİYON YAĞI","parca_no":"","adet":"5.0"},{"isim":"ŞANZIMAN YAĞI","parca_no":"","adet":""},{"isim":"DEFRANSİYEL YAĞI","parca_no":"","adet":""}],"notlar":[]}};
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const FBCFG = {
+  apiKey:"AIzaSyDgh520cc3hiSMxY33Vo-DV688KcY1U4W0",
+  authDomain:"ab-a7b7e.firebaseapp.com",
+  projectId:"ab-a7b7e",
+  storageBucket:"ab-a7b7e.firebasestorage.app",
+  messagingSenderId:"13666536104",
+  appId:"1:13666536104:web:9a1595ee348c52089e509d"
+};
+const fba = initializeApp(FBCFG);
+const db = getFirestore(fba);
+
+const EXCEL_DATA = {
+  mercedes:[
+    {model:"2021",marka:"MERCEDES 4851",plaka:"72 ABP 707",kod:"NO 1",guncel_km:139997,bakim_km:139997,bakim_saat:13900,guncel_saat:13954,kalan_saat:696,kalan_km:10000,bakim_tarihi:"2026-04-04",muayene_tarihi:"2026-11-21",konum:""},
+    {model:"2021",marka:"MERCEDES 4851",plaka:"72 ABP 670",kod:"NO 5",guncel_km:158320,bakim_km:153000,bakim_saat:14378,guncel_saat:15058,kalan_saat:70,kalan_km:4680,bakim_tarihi:"2025-10-08",muayene_tarihi:"2025-09-22",konum:"HARIMCIK"},
+    {model:"2021",marka:"MERCEDES 4851",plaka:"72 ABP 690",kod:"NO 6",guncel_km:126670,bakim_km:124014,bakim_saat:12886,guncel_saat:13537,kalan_saat:99,kalan_km:7344,bakim_tarihi:"2025-10-12",muayene_tarihi:"2026-05-23",konum:"TÜRBE"},
+    {model:"2021",marka:"MERCEDES 4851",plaka:"72 ABP 688",kod:"NO 7",guncel_km:138158,bakim_km:130462,bakim_saat:13489,guncel_saat:14174,kalan_saat:65,kalan_km:2304,bakim_tarihi:"2025-11-23",muayene_tarihi:"2026-11-25",konum:""},
+    {model:"2018",marka:"MERCEDES 4145",plaka:"20 ADG 114",kod:"NO 11",guncel_km:267405,bakim_km:258000,bakim_saat:18423,guncel_saat:18898,kalan_saat:275,kalan_km:595,bakim_tarihi:"2025-05-15",muayene_tarihi:"2026-01-20",konum:"HARIMCIK"},
+    {model:"2023",marka:"MERCEDES 4851",plaka:"06 EAT 660",kod:"NO 12",guncel_km:47960,bakim_km:41663,bakim_saat:3960,guncel_saat:5085,kalan_saat:-375,kalan_km:3703,bakim_tarihi:"2025-09-09",muayene_tarihi:"2026-11-28",konum:""},
+    {model:"2023",marka:"MERCEDES 4851",plaka:"06 EAT 638",kod:"NO 15",guncel_km:50486,bakim_km:50486,bakim_saat:4914,guncel_saat:5415,kalan_saat:249,kalan_km:10000,bakim_tarihi:"2026-01-26",muayene_tarihi:"2026-12-01",konum:""},
+    {model:"2023",marka:"MERCEDES 4851",plaka:"06 EAT 689",kod:"NO 16",guncel_km:43829,bakim_km:43829,bakim_saat:4036,guncel_saat:4403,kalan_saat:383,kalan_km:10000,bakim_tarihi:"2026-01-26",muayene_tarihi:"2026-12-03",konum:""},
+    {model:"2021",marka:"MERCEDES 4851",plaka:"72 ABP 669",kod:"NO 17",guncel_km:123661,bakim_km:127380,bakim_saat:12730,guncel_saat:13237,kalan_saat:243,kalan_km:13719,bakim_tarihi:"2025-10-13",muayene_tarihi:"2026-12-04",konum:"HARIMCIK"},
+    {model:"2023",marka:"MERCEDES 4851",plaka:"06 EAT 663",kod:"NO 18",guncel_km:50559,bakim_km:50559,bakim_saat:4905,guncel_saat:5274,kalan_saat:381,kalan_km:10000,bakim_tarihi:"2026-01-26",muayene_tarihi:"2026-12-09",konum:""},
+    {model:"2023",marka:"MERCEDES 4851",plaka:"06 EAT 701",kod:"NO 19",guncel_km:53464,bakim_km:53464,bakim_saat:4930,guncel_saat:5325,kalan_saat:355,kalan_km:10000,bakim_tarihi:"2026-01-26",muayene_tarihi:"2026-12-17",konum:""},
+    {model:"2021",marka:"MERCEDES 4851",plaka:"72 ABP 713",kod:"NO 20",guncel_km:126123,bakim_km:126123,bakim_saat:12702,guncel_saat:13109,kalan_saat:343,kalan_km:10000,bakim_tarihi:"2026-01-26",muayene_tarihi:"2026-12-20",konum:""},
+    {model:"2021",marka:"MERCEDES 4851",plaka:"72 ABP 668",kod:"NO 21",guncel_km:125588,bakim_km:123860,bakim_saat:12860,guncel_saat:13254,kalan_saat:356,kalan_km:8272,bakim_tarihi:"2026-01-26",muayene_tarihi:"2026-12-23",konum:""},
+    {model:"2023",marka:"MERCEDES 4851",plaka:"06 EAT 635",kod:"NO 22",guncel_km:52911,bakim_km:52911,bakim_saat:4983,guncel_saat:5398,kalan_saat:335,kalan_km:10000,bakim_tarihi:"2026-01-26",muayene_tarihi:"2026-12-26",konum:""},
+    {model:"2021",marka:"MERCEDES 4851",plaka:"72 ABP 687",kod:"NO 23",guncel_km:142079,bakim_km:142079,bakim_saat:13969,guncel_saat:14174,kalan_saat:545,kalan_km:10000,bakim_tarihi:"2026-01-27",muayene_tarihi:"2027-01-04",konum:""},
+    {model:"2021",marka:"MERCEDES 4851",plaka:"72 ABP 691",kod:"NO 24",guncel_km:139466,bakim_km:139466,bakim_saat:14297,guncel_saat:14680,kalan_saat:367,kalan_km:10000,bakim_tarihi:"2026-01-26",muayene_tarihi:"2027-01-19",konum:""},
+    {model:"2023",marka:"MERCEDES 4851",plaka:"06 EGF 523",kod:"NO 33",guncel_km:49934,bakim_km:49934,bakim_saat:6155,guncel_saat:6403,kalan_saat:502,kalan_km:10000,bakim_tarihi:"2026-03-09",muayene_tarihi:"2027-04-09",konum:""},
+    {model:"2023",marka:"MERCEDES 4851",plaka:"06 EGF 556",kod:"NO 34",guncel_km:39424,bakim_km:39424,bakim_saat:4660,guncel_saat:5384,kalan_saat:26,kalan_km:10000,bakim_tarihi:"2026-01-26",muayene_tarihi:"2027-04-12",konum:""},
+    {model:"2023",marka:"MERCEDES 4851",plaka:"06 FEH 920",kod:"NO 35",guncel_km:63446,bakim_km:59838,bakim_saat:4845,guncel_saat:5197,kalan_saat:398,kalan_km:6392,bakim_tarihi:"2026-01-26",muayene_tarihi:"2026-03-19",konum:""},
+    {model:"2023",marka:"MERCEDES 4851",plaka:"06 EGF 589",kod:"NO 36",guncel_km:57118,bakim_km:57118,bakim_saat:4691,guncel_saat:4881,kalan_saat:560,kalan_km:10000,bakim_tarihi:"2026-02-02",muayene_tarihi:"2026-02-16",konum:"HARIMCIK"},
+    {model:"",marka:"MERCEDES 4145",plaka:"21 ABF 578",kod:"NO 41",guncel_km:189803,bakim_km:183400,bakim_saat:12200,guncel_saat:12353,kalan_saat:597,kalan_km:3597,bakim_tarihi:"2026-03-01",muayene_tarihi:"2025-07-17",konum:"TÜRBE"},
+    {model:"",marka:"MERCEDES 4145",plaka:"06 DCB 186",kod:"NO 44",guncel_km:97367,bakim_km:97367,bakim_saat:9424,guncel_saat:9477,kalan_saat:697,kalan_km:10000,bakim_tarihi:"2026-04-02",muayene_tarihi:"2025-08-12",konum:"HARIMCIK"},
+    {model:"2020",marka:"MERCEDES 4145",plaka:"21 ABF 580",kod:"NO 40",guncel_km:191090,bakim_km:188571,bakim_saat:11155,guncel_saat:11567,kalan_saat:338,kalan_km:7481,bakim_tarihi:"2025-09-29",muayene_tarihi:"2026-10-01",konum:"HARIMCIK"},
+    {model:"2021",marka:"MERCEDES 4145",plaka:"07 ANJ 398",kod:"NO 42",guncel_km:149589,bakim_km:149589,bakim_saat:15826,guncel_saat:15941,kalan_saat:635,kalan_km:10000,bakim_tarihi:"2026-01-09",muayene_tarihi:"2026-09-16",konum:"TÜRBE"},
+    {model:"2018",marka:"MERCEDES 4145",plaka:"34 BKU 582",kod:"NO 3",guncel_km:322346,bakim_km:312000,bakim_saat:20519,guncel_saat:21231,kalan_saat:38,kalan_km:-346,bakim_tarihi:"",muayene_tarihi:"2027-03-24",konum:"HARIMCIK"},
+    {model:"2018",marka:"MERCEDES 4145",plaka:"20 ADG 112",kod:"NO 43",guncel_km:295525,bakim_km:287000,bakim_saat:20003,guncel_saat:20421,kalan_saat:332,kalan_km:1475,bakim_tarihi:"",muayene_tarihi:"2025-10-23",konum:""},
+    {model:"2018",marka:"MERCEDES 4145",plaka:"21 ABD 578",kod:"NO 41B",guncel_km:189803,bakim_km:183400,bakim_saat:12200,guncel_saat:12353,kalan_saat:597,kalan_km:3597,bakim_tarihi:"2026-03-01",muayene_tarihi:"2025-07-17",konum:""}
+  ],
+  renault:[
+    {model:"2023",marka:"RENAULT 520",plaka:"06 EBU 872",kod:"NO 26",guncel_km:42121,bakim_km:42121,bakim_saat:4477,guncel_saat:5164,kalan_saat:63,kalan_km:10000,bakim_tarihi:"2025-12-08",muayene_tarihi:"2027-02-13"},
+    {model:"2023",marka:"RENAULT 520",plaka:"06 ECP 343",kod:"NO 27",guncel_km:45895,bakim_km:44559,bakim_saat:4036,guncel_saat:4691,kalan_saat:95,kalan_km:8664,bakim_tarihi:"2025-12-08",muayene_tarihi:"2027-03-14"},
+    {model:"2023",marka:"RENAULT 520",plaka:"06 ECL 480",kod:"NO 28",guncel_km:45852,bakim_km:43628,bakim_saat:4172,guncel_saat:4600,kalan_saat:322,kalan_km:7776,bakim_tarihi:"2025-12-08",muayene_tarihi:"2025-12-08"},
+    {model:"2023",marka:"RENAULT 520",plaka:"06 ECN 357",kod:"NO 29",guncel_km:40040,bakim_km:37928,bakim_saat:3549,guncel_saat:4102,kalan_saat:197,kalan_km:7888,bakim_tarihi:"2025-12-08",muayene_tarihi:"2027-03-23"},
+    {model:"2023",marka:"RENAULT 520",plaka:"06 ECP 316",kod:"NO 30",guncel_km:48852,bakim_km:46102,bakim_saat:4502,guncel_saat:5202,kalan_saat:50,kalan_km:7250,bakim_tarihi:"2025-12-08",muayene_tarihi:"2027-04-03"},
+    {model:"2024",marka:"RENAULT 520",plaka:"06 EFA 637",kod:"NO 31",guncel_km:45380,bakim_km:42916,bakim_saat:4033,guncel_saat:4669,kalan_saat:114,kalan_km:7536,bakim_tarihi:"2025-12-07",muayene_tarihi:"2027-04-05"},
+    {model:"2024",marka:"RENAULT 520",plaka:"06 EFB 132",kod:"NO 32",guncel_km:36920,bakim_km:33510,bakim_saat:3678,guncel_saat:4032,kalan_saat:396,kalan_km:6590,bakim_tarihi:"2026-02-02",muayene_tarihi:"2026-04-07"},
+    {model:"2025",marka:"RENAULT 520",plaka:"06 FAJ 084",kod:"NO 2",guncel_km:29070,bakim_km:29070,bakim_saat:2606,guncel_saat:2606,kalan_saat:750,kalan_km:10000,bakim_tarihi:"2026-04-10",muayene_tarihi:"2027-02-23"},
+    {model:"2025",marka:"RENAULT 520",plaka:"06 FAJ 172",kod:"NO 4",guncel_km:27689,bakim_km:27689,bakim_saat:2540,guncel_saat:2540,kalan_saat:750,kalan_km:10000,bakim_tarihi:"2026-04-09",muayene_tarihi:"2027-03-01"},
+    {model:"2025",marka:"RENAULT 520",plaka:"06 FAJ 471",kod:"NO 8",guncel_km:29697,bakim_km:29697,bakim_saat:2644,guncel_saat:2644,kalan_saat:750,kalan_km:10000,bakim_tarihi:"2026-04-10",muayene_tarihi:"2027-01-20"},
+    {model:"2025",marka:"RENAULT 520",plaka:"06 FAH 784",kod:"NO 37",guncel_km:29731,bakim_km:29731,bakim_saat:2649,guncel_saat:2649,kalan_saat:750,kalan_km:10000,bakim_tarihi:"2026-04-10",muayene_tarihi:"2027-03-06"},
+    {model:"2025",marka:"RENAULT 520",plaka:"06 FAH 630",kod:"NO 38",guncel_km:29762,bakim_km:29762,bakim_saat:2616,guncel_saat:2616,kalan_saat:750,kalan_km:10000,bakim_tarihi:"2026-04-10",muayene_tarihi:"2027-03-12"},
+    {model:"2025",marka:"RENAULT 520",plaka:"06 FAH 940",kod:"NO 39",guncel_km:26163,bakim_km:26163,bakim_saat:2293,guncel_saat:2293,kalan_saat:750,kalan_km:1919,bakim_tarihi:"2026-04-09",muayene_tarihi:"2027-03-12"},
+    {model:"2025",marka:"RENAULT 520",plaka:"72 ACR 237",kod:"NO 45",guncel_km:15969,bakim_km:15969,bakim_saat:1378,guncel_saat:1378,kalan_saat:750,kalan_km:10000,bakim_tarihi:"2026-04-10",muayene_tarihi:"2026-08-18"},
+    {model:"2025",marka:"RENAULT 520",plaka:"72 ACR 236",kod:"NO 46",guncel_km:15418,bakim_km:15418,bakim_saat:1335,guncel_saat:1335,kalan_saat:750,kalan_km:10000,bakim_tarihi:"2026-04-09",muayene_tarihi:"2026-08-18"},
+    {model:"2025",marka:"RENAULT 520",plaka:"72 ACR 233",kod:"NO 47",guncel_km:16704,bakim_km:16704,bakim_saat:1378,guncel_saat:1378,kalan_saat:750,kalan_km:10000,bakim_tarihi:"2026-04-10",muayene_tarihi:"2026-08-18"},
+    {model:"2025",marka:"RENAULT 520",plaka:"72 ACR 231",kod:"NO 48",guncel_km:17337,bakim_km:17337,bakim_saat:1389,guncel_saat:1389,kalan_saat:750,kalan_km:10000,bakim_tarihi:"2026-04-09",muayene_tarihi:"2026-08-18"},
+    {model:"2025",marka:"RENAULT 520",plaka:"72 ACR 234",kod:"NO 49",guncel_km:15141,bakim_km:15141,bakim_saat:1311,guncel_saat:1311,kalan_saat:750,kalan_km:10000,bakim_tarihi:"2026-04-09",muayene_tarihi:"2026-08-18"},
+    {model:"2024",marka:"RENAULT 520",plaka:"72 ABU 389",kod:"LOWBET",guncel_km:25663,bakim_km:25663,bakim_saat:1263,guncel_saat:1737,kalan_saat:276,kalan_km:10000,bakim_tarihi:"2025-11-06",muayene_tarihi:"2027-03-01"}
+  ],
+  volvo:[
+    {model:"2023",marka:"VOLVO 500FMX",plaka:"72 ABL 339",kod:"NO 9",guncel_km:83464,bakim_km:79518,bakim_saat:7195,guncel_saat:7841,kalan_saat:104,kalan_km:0,bakim_tarihi:"2025-09-18",muayene_tarihi:"2026-08-19"},
+    {model:"2023",marka:"VOLVO 500FMX",plaka:"72 ABL 338",kod:"NO 10",guncel_km:86635,bakim_km:78233,bakim_saat:7101,guncel_saat:7850,kalan_saat:1,kalan_km:0,bakim_tarihi:"2025-09-18",muayene_tarihi:"2025-07-17"},
+    {model:"2023",marka:"VOLVO 500FMX",plaka:"72 ABL 929",kod:"NO 13",guncel_km:52763,bakim_km:52763,bakim_saat:7890,guncel_saat:7961,kalan_saat:679,kalan_km:0,bakim_tarihi:"2026-02-12",muayene_tarihi:"2026-07-30"},
+    {model:"2023",marka:"VOLVO 500FMX",plaka:"72 ABL 941",kod:"NO 14",guncel_km:29956,bakim_km:29956,bakim_saat:3659,guncel_saat:3659,kalan_saat:750,kalan_km:0,bakim_tarihi:"2024-03-27",muayene_tarihi:"2025-12-10"},
+    {model:"2023",marka:"VOLVO 500FMX",plaka:"72 ABL 343",kod:"NO 25",guncel_km:78948,bakim_km:74000,bakim_saat:6680,guncel_saat:7467,kalan_saat:-37,kalan_km:0,bakim_tarihi:"2025-09-19",muayene_tarihi:"2025-07-19"}
+  ],
+  arazoz:[
+    {model:"",marka:"FORD CARGO",plaka:"06 CGE 606",kod:"A-2",guncel_km:58900,bakim_km:57088,bakim_saat:0,guncel_saat:0,kalan_saat:750,kalan_km:0,bakim_tarihi:"2025-09-07",muayene_tarihi:"2026-05-26"},
+    {model:"2016",marka:"FORD CARGO 3542D",plaka:"34 ELV 435",kod:"A-1",guncel_km:184692,bakim_km:183513,bakim_saat:0,guncel_saat:0,kalan_saat:750,kalan_km:0,bakim_tarihi:"2025-08-31",muayene_tarihi:"2026-05-22"},
+    {model:"",marka:"FORD CARGO",plaka:"06 CHU 161",kod:"A-3",guncel_km:117304,bakim_km:115793,bakim_saat:12488,guncel_saat:12896,kalan_saat:342,kalan_km:0,bakim_tarihi:"2025-09-07",muayene_tarihi:"2026-06-01"},
+    {model:"2025",marka:"FORD CARGO 3542",plaka:"34 NIF 631",kod:"A-4",guncel_km:61065,bakim_km:0,bakim_saat:0,guncel_saat:0,kalan_saat:750,kalan_km:0,bakim_tarihi:"",muayene_tarihi:"2026-05-21"}
+  ]
+};
+
+const TABS = {mrc:'mercedes',rn:'renault',vl:'volvo',az:'arazoz'};
+let users={}, updates={}, cu=null;
+const td = () => new Date().toISOString().split('T')[0];
+
+function toast(msg,err){const t=document.getElementById('toast');t.textContent=(err?'':'✓ ')+msg;t.className=err?'e':'';t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>{t.style.display='none';},3000);}
+function syncShow(on){document.getElementById('sync-bar').style.display=on?'block':'none';document.getElementById('sync-lbl').style.display=on?'block':'none';}
+
+async function fss(col,id,data){await setDoc(doc(db,col,id),data);}
+async function fsd(col,id){await deleteDoc(doc(db,col,id));}
+async function fsga(col){const s=await getDocs(collection(db,col));const o={};s.forEach(d=>{o[d.id]=d.data();});return o;}
+
+async function init() {
+  try {
+    const [u,upd]=await Promise.all([fsga('kbt_users'),fsga('kbt_updates')]);
+    users=u||{}; updates=upd||{};
+    if(!Object.keys(users).length){const au={username:'admin',password:'admin123',role:'admin'};await fss('kbt_users','admin',au);users={admin:au};}
+    listen();
+    document.getElementById('ls').style.display='none';
+    document.getElementById('login').style.display='flex';
+  } catch(e){
+    document.getElementById('ltxt').textContent='// HATA: '+e.message; console.error(e);
+  }
+}
+
+function listen(){
+  onSnapshot(collection(db,'kbt_updates'),snap=>{
+    snap.docChanges().forEach(ch=>{
+      if(ch.type==='added'||ch.type==='modified') updates[ch.doc.id]=ch.doc.data();
+      else if(ch.type==='removed') delete updates[ch.doc.id];
+    });
+    if(cu){Object.keys(TABS).forEach(k=>renderTable(k));renderReport();sysInfo();}
+    syncShow(true);clearTimeout(window._st);window._st=setTimeout(()=>syncShow(false),2000);
+  });
+}
+
+document.getElementById('lbtn').onclick=login;
+document.getElementById('lout').onclick=logout;
+document.addEventListener('keypress',e=>{if(e.key==='Enter'&&document.getElementById('login').style.display!=='none')login();});
+
+function login(){
+  const u=document.getElementById('lu').value.trim();
+  const p=document.getElementById('lp').value;
+  const f=Object.values(users).find(x=>x.username===u&&x.password===p);
+  if(!f){document.getElementById('lerr').style.display='block';return;}
+  cu=f;
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('tun').textContent=f.username;
+  const b=document.getElementById('tbdg');
+  b.textContent=f.role==='admin'?'ADMİN':'İZLEYİCİ';
+  b.className='ubdg '+(f.role==='admin'?'badmin':'bview');
+  document.getElementById('atab').style.display=f.role==='admin'?'':'none';
+  startApp();
+}
+function logout(){cu=null;document.getElementById('login').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('lu').value='';document.getElementById('lp').value='';document.getElementById('lerr').style.display='none';}
+
+document.querySelectorAll('.ntab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-section').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    btn.classList.add('active');
+    if(btn.dataset.tab==='tab-admin') adminRender();
+    if(btn.dataset.tab==='tab-report') renderReport();
+  });
+});
+
+function startApp(){Object.keys(TABS).forEach(k=>renderTable(k));renderReport();adminRender();sysInfo();}
+
+function getVehicles(type){
+  return EXCEL_DATA[type].map(v=>{
+    const key=type+'_'+v.plaka.replace(/\s+/g,'_');
+    const upd=updates[key];
+    return upd?{...v,...upd,plaka:v.plaka,kod:v.kod,marka:v.marka,model:v.model}:{...v};
+  });
+}
+
+function statusOf(v){const ks=v.kalan_saat,kk=v.kalan_km;if(ks<=0||kk<=0)return 'urgent';if(ks<=100||kk<=1000)return 'urgent';if(ks<=200||kk<=2000)return 'warn';return 'ok';}
+function statusBadge(v){const s=statusOf(v);if(s==='urgent')return '<span class="badge badge-urgent">ACİL</span>';if(s==='warn')return '<span class="badge badge-warn">YAKLAŞIYOR</span>';return '<span class="badge badge-ok">NORMAL</span>';}
+function muayeneStatus(dt){if(!dt)return '<span class="td-dim">—</span>';const d=new Date(dt),now=new Date(),diff=(d-now)/(1000*60*60*24);if(diff<0)return '<span class="td-red">GEÇMİŞ</span>';if(diff<30)return '<span class="td-ora">'+dt+'</span>';return '<span class="td-grn">'+dt+'</span>';}
+function numColor(val,w=200,u=100){if(val<=0)return 'td-red';if(val<=u)return 'td-red';if(val<=w)return 'td-ora';return 'td-grn';}
+
+window.renderTable = function(key){
+  const type=TABS[key];
+  const vehicles=getVehicles(type);
+  const srch=((document.getElementById('srch-'+key)||{}).value||'').toLowerCase();
+  const fsel=(document.getElementById('fsel-'+key)||{}).value||'all';
+  const urgent=vehicles.filter(v=>statusOf(v)==='urgent').length;
+  const warn=vehicles.filter(v=>statusOf(v)==='warn').length;
+  const ok=vehicles.filter(v=>statusOf(v)==='ok').length;
+  const statsEl=document.getElementById('stats-'+key);
+  if(statsEl) statsEl.innerHTML='<div class="sc"><div class="sl">Toplam Araç</div><div class="sv">'+vehicles.length+'</div><div class="su">adet</div></div>'+'<div class="sc"><div class="sl">Acil Bakım</div><div class="sv" style="color:var(--red)">'+urgent+'</div><div class="su">araç</div></div>'+'<div class="sc"><div class="sl">Yaklaşan</div><div class="sv" style="color:var(--orange)">'+warn+'</div><div class="su">araç</div></div>'+'<div class="sc"><div class="sl">Normal</div><div class="sv" style="color:var(--green)">'+ok+'</div><div class="su">araç</div></div>';
+  let filtered=vehicles.filter(v=>{
+    const match=!srch||v.plaka.toLowerCase().includes(srch)||v.kod.toLowerCase().includes(srch)||v.marka.toLowerCase().includes(srch)||v.model.toLowerCase().includes(srch);
+    return match&&(fsel==='all'||statusOf(v)===fsel);
+  });
+  const thead=document.getElementById('thead-'+key);
+  const tbody=document.getElementById('tbody-'+key);
+  if(!thead||!tbody)return;
+  thead.innerHTML='<tr><th>KOD</th><th>PLAKA</th><th>MARKA</th><th class="td-r">GÜNCEL KM</th><th class="td-r">GÜNCEL SAAT</th><th class="td-r">KALAN SAAT</th><th class="td-r">KALAN KM</th><th>SON BAKIM</th><th>MUAYENE</th><th>DURUM</th></tr>';
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="10" class="nd">— Araç bulunamadı —</td></tr>';return;}
+  tbody.innerHTML=filtered.map(v=>{
+    const s=statusOf(v);
+    const hasCari=!!CARI_DATA[v.plaka];
+    return '<tr class="row-'+s+'" onclick="openDetail(''+type+'',''+v.plaka+'')" style="cursor:pointer">'+
+      '<td class="td-acc">'+v.kod+'</td>'+
+      '<td class="td-blue">'+v.plaka+(hasCari?' <span style="color:var(--purple);font-size:9px">●CARİ</span>':'')+'</td>'+
+      '<td>'+v.marka+(v.model?' '+v.model:'')+'</td>'+
+      '<td class="td-r">'+(v.guncel_km?v.guncel_km.toLocaleString('tr-TR'):'-')+'</td>'+
+      '<td class="td-r">'+(v.guncel_saat?v.guncel_saat.toLocaleString('tr-TR'):'-')+'</td>'+
+      '<td class="td-r '+numColor(v.kalan_saat)+'">'+v.kalan_saat+'</td>'+
+      '<td class="td-r '+numColor(v.kalan_km,2000,500)+'">'+v.kalan_km+'</td>'+
+      '<td>'+(v.bakim_tarihi||'—')+'</td>'+
+      '<td>'+muayeneStatus(v.muayene_tarihi)+'</td>'+
+      '<td>'+statusBadge(v)+'</td>'+
+      '</tr>';
+  }).join('');
+};
+
+window.switchDTab = function(name, btn){
+  document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.dpanel').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('dpanel-'+name).classList.add('active');
+};
+
+window.openDetail = function(type, plaka){
+  const vehicles=getVehicles(type);
+  const v=vehicles.find(x=>x.plaka===plaka);
+  if(!v)return;
+  document.getElementById('d-title').textContent=v.plaka;
+  document.getElementById('d-sub').textContent=v.kod+' · '+v.marka+(v.model?' · '+v.model:'')+(v.konum?' · '+v.konum:'');
+  const isAdmin=cu&&cu.role==='admin';
+  const s=statusOf(v);
+  const sColor=s==='urgent'?'red':s==='warn'?'orange':'green';
+  const maxSaat=750;
+  const saatPct=v.kalan_saat>0?Math.max(0,Math.min(100,(v.kalan_saat/maxSaat)*100)):0;
+  const saatColor=s==='urgent'?'var(--red)':s==='warn'?'var(--orange)':'var(--green)';
+
+  // BAKIM TAKİP PANELİ
+  document.getElementById('dpanel-bakim').innerHTML=
+    '<div class="detail-grid">'+
+    '<div class="di"><div class="di-label">Güncel KM</div><div class="di-val accent">'+(v.guncel_km||0).toLocaleString('tr-TR')+' km</div></div>'+
+    '<div class="di"><div class="di-label">Güncel Saat</div><div class="di-val accent">'+(v.guncel_saat||0).toLocaleString('tr-TR')+' saat</div></div>'+
+    '<div class="di"><div class="di-label">Son Bakım KM</div><div class="di-val">'+(v.bakim_km||0).toLocaleString('tr-TR')+' km</div></div>'+
+    '<div class="di"><div class="di-label">Son Bakım Saati</div><div class="di-val">'+(v.bakim_saat||0).toLocaleString('tr-TR')+' saat</div></div>'+
+    '<div class="di"><div class="di-label">Bakıma Kalan Saat</div><div class="di-val '+sColor+'">'+v.kalan_saat+' saat</div></div>'+
+    '<div class="di"><div class="di-label">Bakıma Kalan KM</div><div class="di-val '+sColor+'">'+v.kalan_km+' km</div></div>'+
+    '<div class="di"><div class="di-label">Son Bakım Tarihi</div><div class="di-val">'+(v.bakim_tarihi||'—')+'</div></div>'+
+    '<div class="di"><div class="di-label">Muayene Tarihi</div><div class="di-val">'+(v.muayene_tarihi||'—')+'</div></div>'+
+    '</div>'+
+    '<div class="prog-wrap"><div class="prog-label"><span>Bakım Doluluk (750 saat)</span><span>'+v.kalan_saat+' saat kaldı</span></div><div class="prog-bar"><div class="prog-fill" style="width:'+saatPct+'%;background:'+saatColor+'"></div></div></div>'+
+    '<div class="hist-section"><div class="hist-title">GÜNCELLEME GEÇMİŞİ</div>'+renderHistory(type,plaka,isAdmin)+'</div>';
+
+  // CARİ KART PANELİ
+  const cari=CARI_DATA[plaka];
+  let cariHtml='';
+  if(!cari||(!cari.filtreler.length&&!cari.yaglar.length)){
+    cariHtml='<div class="nd">— Bu araç için cari kart verisi bulunamadı —</div>';
+  } else {
+    // Filtreler
+    const tumFiltreler = [];
+    // Yağlar bölümündeki filtre isimli olanları da al
+    const yagFiltreler = (cari.yaglar||[]).filter(y=>y.isim&&(y.isim.toUpperCase().includes('FİLTRE')||y.isim.toUpperCase().includes('FLİTRE')));
+    const yaglarTemiz = (cari.yaglar||[]).filter(y=>y.isim&&!y.isim.toUpperCase().includes('FİLTRE')&&!y.isim.toUpperCase().includes('FLİTRE'));
+    const filtrelerAll = [...(cari.filtreler||[]), ...yagFiltreler];
+
+    if(filtrelerAll.length){
+      cariHtml+='<div class="cari-section"><div class="cari-title">FİLTRELER</div>'+
+        '<div style="overflow-x:auto"><table class="cari-table"><thead><tr><th></th><th>Filtre Adı</th><th>Parça No</th><th class="td-r">Adet</th></tr></thead><tbody>'+
+        filtrelerAll.map(f=>'<tr>'+
+          '<td><span class="ct-badge ct-f">FİLTRE</span></td>'+
+          '<td class="ct-isim">'+f.isim+'</td>'+
+          '<td class="ct-parca">'+(f.parca_no||'—')+'</td>'+
+          '<td class="ct-adet">'+(f.adet||'—')+'</td>'+
+          '</tr>').join('')+
+        '</tbody></table></div></div>';
+    }
+
+    if(yaglarTemiz.length){
+      cariHtml+='<div class="cari-section"><div class="cari-title">YAĞLAR</div>'+
+        '<div style="overflow-x:auto"><table class="cari-table"><thead><tr><th></th><th>Yağ Adı</th><th>Parça No</th><th class="td-r">Miktar</th></tr></thead><tbody>'+
+        yaglarTemiz.map(y=>'<tr>'+
+          '<td><span class="ct-badge ct-y">YAĞ</span></td>'+
+          '<td class="ct-isim">'+y.isim+'</td>'+
+          '<td class="ct-parca">'+(y.parca_no||'—')+'</td>'+
+          '<td class="ct-adet">'+(y.adet?y.adet+' L':'—')+'</td>'+
+          '</tr>').join('')+
+        '</tbody></table></div></div>';
+    }
+
+    if(cari.notlar&&cari.notlar.length){
+      cariHtml+='<div class="not-box">'+cari.notlar.map(n=>'<p>'+n+'</p>').join('')+'</div>';
+    }
+  }
+  document.getElementById('dpanel-cari').innerHTML=cariHtml;
+
+  // GÜNCELLE PANELİ
+  if(isAdmin){
+    document.getElementById('dpanel-guncelle').innerHTML=
+      '<div class="update-form"><h4>// GÜNCEL BİLGİ GİR</h4>'+
+      '<div class="form-grid">'+
+      '<div class="fi"><label>Güncel KM</label><input type="number" id="upd-km" value="'+(v.guncel_km||0)+'" min="0"></div>'+
+      '<div class="fi"><label>Güncel Saat</label><input type="number" id="upd-saat" value="'+(v.guncel_saat||0)+'" min="0"></div>'+
+      '<div class="fi"><label>Son Bakım KM</label><input type="number" id="upd-bkm" value="'+(v.bakim_km||0)+'" min="0"></div>'+
+      '<div class="fi"><label>Son Bakım Saati</label><input type="number" id="upd-bsaat" value="'+(v.bakim_saat||0)+'" min="0"></div>'+
+      '<div class="fi"><label>Bakıma Kalan Saat</label><input type="number" id="upd-ks" value="'+(v.kalan_saat||0)+'"></div>'+
+      '<div class="fi"><label>Bakıma Kalan KM</label><input type="number" id="upd-kk" value="'+(v.kalan_km||0)+'"></div>'+
+      '<div class="fi"><label>Son Bakım Tarihi</label><input type="date" id="upd-bt" value="'+(v.bakim_tarihi||'')+'" style="color-scheme:dark"></div>'+
+      '<div class="fi"><label>Muayene Tarihi</label><input type="date" id="upd-mt" value="'+(v.muayene_tarihi||'')+'" style="color-scheme:dark"></div>'+
+      '</div>'+
+      '<button class="upbtn" onclick="saveUpdate(''+type+'',''+plaka+'')">KAYDET</button>'+
+      '</div>';
+  } else {
+    document.getElementById('dpanel-guncelle').innerHTML='<div class="nd">ℹ Güncelleme için admin yetkisi gereklidir</div>';
+  }
+
+  document.getElementById('detail-overlay').classList.add('show');
+  // Default bakim tabını göster
+  document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.dpanel').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.dtab:first-child').classList.add('active');
+  document.getElementById('dpanel-bakim').classList.add('active');
+};
+
+function renderHistory(type,plaka,isAdmin){
+  const key=type+'_'+plaka.replace(/\s+/g,'_');
+  const upd=updates[key];
+  if(!upd||!upd.history||!upd.history.length)return '<div class="nd" style="padding:16px">— Güncelleme geçmişi yok —</div>';
+  const rows=[...upd.history].reverse().map((h,i)=>'<tr><td>'+h.tarih+'</td><td class="td-r">'+(h.guncel_km||0).toLocaleString('tr-TR')+'</td><td class="td-r">'+(h.guncel_saat||0).toLocaleString('tr-TR')+'</td><td class="td-r" style="color:var(--'+(h.kalan_saat<=100?'red':h.kalan_saat<=200?'orange':'green')+')">'+(h.kalan_saat||0)+'</td><td>'+(h.bakim_tarihi||'—')+'</td><td>'+(h.kullanici||'—')+'</td>'+(isAdmin?'<td><button class="delbtn" onclick="delHistory(''+type+'',''+plaka+'','+i+')">SİL</button></td>':'')+'</tr>').join('');
+  return '<table class="ht"><thead><tr><th>Tarih</th><th class="td-r">KM</th><th class="td-r">Saat</th><th class="td-r">Kalan Saat</th><th>Son Bakım</th><th>Kullanıcı</th>'+(isAdmin?'<th></th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+window.saveUpdate=async function(type,plaka){
+  const key=type+'_'+plaka.replace(/\s+/g,'_');
+  const km=parseInt(document.getElementById('upd-km').value)||0;
+  const saat=parseInt(document.getElementById('upd-saat').value)||0;
+  const bkm=parseInt(document.getElementById('upd-bkm').value)||0;
+  const bsaat=parseInt(document.getElementById('upd-bsaat').value)||0;
+  const ks=parseInt(document.getElementById('upd-ks').value)||0;
+  const kk=parseInt(document.getElementById('upd-kk').value)||0;
+  const bt=document.getElementById('upd-bt').value||'';
+  const mt=document.getElementById('upd-mt').value||'';
+  const existing=updates[key]||{};
+  const history=existing.history||[];
+  history.push({tarih:td(),guncel_km:km,guncel_saat:saat,kalan_saat:ks,bakim_tarihi:bt,kullanici:cu.username});
+  await fss('kbt_updates',key,{plaka,type,guncel_km:km,guncel_saat:saat,bakim_km:bkm,bakim_saat:bsaat,kalan_saat:ks,kalan_km:kk,bakim_tarihi:bt,muayene_tarihi:mt,son_guncelleme:td(),history});
+  toast('Güncellendi: '+plaka);
+  closeDetail();
+};
+
+window.delHistory=async function(type,plaka,idx){
+  if(!confirm('Bu geçmiş kaydı silinecek?'))return;
+  const key=type+'_'+plaka.replace(/\s+/g,'_');
+  const upd=updates[key];
+  if(!upd)return;
+  const realIdx=upd.history.length-1-idx;
+  upd.history.splice(realIdx,1);
+  await fss('kbt_updates',key,upd);
+  toast('Geçmiş kaydı silindi');
+  openDetail(type,plaka);
+};
+
+window.closeDetail=function(){document.getElementById('detail-overlay').classList.remove('show');};
+document.getElementById('detail-overlay').onclick=function(e){if(e.target===this)closeDetail();};
+
+function renderReport(){
+  const allMerged=[
+    ...getVehicles('mercedes').map(v=>({...v,_tip:'Mercedes'})),
+    ...getVehicles('renault').map(v=>({...v,_tip:'Renault'})),
+    ...getVehicles('volvo').map(v=>({...v,_tip:'Volvo'})),
+    ...getVehicles('arazoz').map(v=>({...v,_tip:'Arazöz'}))
+  ];
+  const urgent=allMerged.filter(v=>statusOf(v)==='urgent');
+  const warn=allMerged.filter(v=>statusOf(v)==='warn');
+  const stats='<div class="stats-row">'+
+    '<div class="sc"><div class="sl">Toplam Araç</div><div class="sv">'+allMerged.length+'</div><div class="su">filo</div></div>'+
+    '<div class="sc"><div class="sl">ACİL BAKIM</div><div class="sv" style="color:var(--red)">'+urgent.length+'</div><div class="su">araç</div></div>'+
+    '<div class="sc"><div class="sl">YAKLAŞAN</div><div class="sv" style="color:var(--orange)">'+warn.length+'</div><div class="su">araç</div></div>'+
+    '<div class="sc"><div class="sl">Mercedes</div><div class="sv">'+EXCEL_DATA.mercedes.length+'</div><div class="su">araç</div></div>'+
+    '<div class="sc"><div class="sl">Renault</div><div class="sv">'+EXCEL_DATA.renault.length+'</div><div class="su">araç</div></div>'+
+    '<div class="sc"><div class="sl">Volvo</div><div class="sv">'+EXCEL_DATA.volvo.length+'</div><div class="su">araç</div></div>'+
+    '<div class="sc"><div class="sl">Arazöz</div><div class="sv">'+EXCEL_DATA.arazoz.length+'</div><div class="su">araç</div></div>'+
+    '</div>';
+  const urgentRows=[...urgent,...warn].sort((a,b)=>a.kalan_saat-b.kalan_saat).map(v=>'<tr class="row-'+statusOf(v)+'"><td class="td-acc">'+v.kod+'</td><td class="td-blue">'+v.plaka+'</td><td>'+v._tip+'</td><td class="td-r '+numColor(v.kalan_saat)+'">'+v.kalan_saat+'</td><td class="td-r '+numColor(v.kalan_km,2000,500)+'">'+v.kalan_km+'</td><td>'+(v.bakim_tarihi||'—')+'</td><td>'+statusBadge(v)+'</td></tr>').join('');
+  const today=new Date();
+  const muayeneRows=allMerged.filter(v=>{if(!v.muayene_tarihi)return false;const d=new Date(v.muayene_tarihi);return(d-today)/(1000*60*60*24)<60;}).sort((a,b)=>new Date(a.muayene_tarihi)-new Date(b.muayene_tarihi)).map(v=>{const d=new Date(v.muayene_tarihi);const diff=Math.round((d-today)/(1000*60*60*24));const cls=diff<0?'td-red':diff<30?'td-ora':'td-grn';return '<tr><td class="td-acc">'+v.kod+'</td><td class="td-blue">'+v.plaka+'</td><td>'+v._tip+'</td><td class="'+cls+'">'+v.muayene_tarihi+'</td><td class="'+cls+'">'+(diff<0?'GEÇMİŞ '+Math.abs(diff)+' gün':diff+' gün kaldı')+'</td></tr>';}).join('');
+  document.getElementById('report-content').innerHTML=stats+
+    '<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:var(--accent);margin-bottom:12px;margin-top:20px">// ACİL & YAKLAŞAN BAKIMLAR</div>'+
+    '<div class="vtable-wrap"><table class="vtable"><thead><tr><th>KOD</th><th>PLAKA</th><th>TİP</th><th class="td-r">KALAN SAAT</th><th class="td-r">KALAN KM</th><th>SON BAKIM</th><th>DURUM</th></tr></thead><tbody>'+(urgentRows||'<tr><td colspan="7" class="nd">— Acil bakım yok —</td></tr>')+'</tbody></table></div>'+
+    '<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:var(--accent);margin-bottom:12px;margin-top:24px">// YAKLAŞAN MUAYENELER (60 gün)</div>'+
+    '<div class="vtable-wrap"><table class="vtable"><thead><tr><th>KOD</th><th>PLAKA</th><th>TİP</th><th>MUAYENE TARİHİ</th><th>KALAN SÜRE</th></tr></thead><tbody>'+(muayeneRows||'<tr><td colspan="5" class="nd">— Yaklaşan muayene yok —</td></tr>')+'</tbody></table></div>';
+}
+
+function adminRender(){
+  if(!cu||cu.role!=='admin')return;
+  renderUList(); sysInfo();
+}
+function renderUList(){
+  const el=document.getElementById('ulist');
+  if(!el)return;
+  el.innerHTML=Object.values(users).map(u=>'<div class="ui"><div class="un">'+u.username+'</div><div class="ur '+(u.role==='admin'?'ra':'rv')+'">'+(u.role==='admin'?'ADMİN':'İZLEYİCİ')+'</div>'+(u.username!=='admin'?'<button class="dub" onclick="delU(''+u.username+'')">SİL</button>':'')+'</div>').join('');
+}
+document.getElementById('aubtn').onclick=async function(){
+  const un=document.getElementById('nu').value.trim(),pw=document.getElementById('np').value,rl=document.getElementById('nr').value;
+  if(!un||!pw){toast('Kullanıcı adı ve şifre gerekli',true);return;}
+  if(users[un]){toast('Bu kullanıcı adı zaten var',true);return;}
+  const nu={username:un,password:pw,role:rl};
+  await fss('kbt_users',un,nu);users[un]=nu;
+  document.getElementById('nu').value='';document.getElementById('np').value='';
+  toast('Kullanıcı eklendi: '+un);renderUList();
+};
+window.delU=async function(un){
+  if(un==='admin'){toast('Admin silinemez',true);return;}
+  if(!confirm(un+' silinsin mi?'))return;
+  await fsd('kbt_users',un);delete users[un];toast('Kullanıcı silindi');renderUList();
+};
+function sysInfo(){
+  const el=document.getElementById('sysinfo');if(!el)return;
+  const total=Object.values(EXCEL_DATA).reduce((s,a)=>s+a.length,0);
+  el.innerHTML='Toplam Araç: <b style="color:var(--accent)">'+total+'</b><br>Güncelleme: <b style="color:var(--accent)">'+Object.keys(updates).length+'</b><br>Kullanıcı: <b style="color:var(--accent)">'+Object.keys(users).length+'</b><br>Versiyon: <b style="color:var(--accent)">KBT v2.0</b><br>Depolama: <b style="color:var(--accent)">Firebase ☁</b>';
+}
+document.getElementById('expbtn').onclick=function(){
+  const data={vehicles:EXCEL_DATA,cari:CARI_DATA,updates:updates,exported:new Date().toISOString()};
+  const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='kbt_export_'+td()+'.json';a.click();
+};
+document.getElementById('clrbtn').onclick=async function(){
+  if(!confirm('Tüm güncellemeler silinecek! Onaylıyor musunuz?'))return;
+  for(const id of Object.keys(updates))await fsd('kbt_updates',id);
+  toast('Tüm güncellemeler silindi');
+};
+
+init();
+</script>
+</body>
+</html>
