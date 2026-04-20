@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KAMYON BAKIM TAKİP SİSTEMİ</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<style>
+:root{--bg:#0a0c0f;--surface:#111318;--surface2:#181c24;--border:#1e2430;--accent:#f0a500;--text:#d4dbe8;--text-dim:#5a6478;--text-muted:#2e3545;--green:#00c97a;--red:#ff4444;--blue:#2e9cff;--orange:#ff8c00;--purple:#9b59ff;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",sans-serif;min-height:100vh;}
+#login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:32px;z-index:1000;}
+.logo{font-family:"Bebas Neue",sans-serif;font-size:48px;letter-spacing:6px;color:var(--accent);text-align:center;}
+.logo span{color:var(--text-dim);font-size:13px;font-family:"IBM Plex Mono",monospace;display:block;letter-spacing:4px;margin-top:6px;}
+.lbox{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--accent);padding:32px;width:320px;}
+.lbox h2{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:3px;color:var(--text-dim);margin-bottom:20px;}
+.lf{margin-bottom:14px;}
+.lf label{display:block;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:5px;text-transform:uppercase;}
+.lf input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;font-family:"IBM Plex Mono",monospace;font-size:13px;outline:none;}
+.lf input:focus{border-color:var(--accent);}
+.lbtn{width:100%;background:var(--accent);color:#000;border:none;padding:12px;font-family:"Bebas Neue",sans-serif;font-size:18px;letter-spacing:4px;cursor:pointer;margin-top:6px;opacity:0.5;transition:opacity 0.2s;}
+.lbtn.active{opacity:1;cursor:pointer;}
+.lbtn:disabled{opacity:0.5;cursor:not-allowed;}
+.lerr{color:var(--red);font-family:"IBM Plex Mono",monospace;font-size:11px;margin-top:8px;display:none;}
+#app{display:none;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);min-height:52px;display:flex;align-items:center;padding:8px 16px;gap:12px;position:sticky;top:0;z-index:100;flex-wrap:wrap;}
+.tlogo{font-family:"Bebas Neue",sans-serif;font-size:20px;letter-spacing:4px;color:var(--accent);}
+.tdiv{width:1px;height:24px;background:var(--border);}
+.ntabs{display:flex;gap:2px;flex-wrap:wrap;}
+.ntab{padding:5px 11px;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:1px;cursor:pointer;border:1px solid transparent;color:var(--text-dim);background:none;text-transform:uppercase;}
+.ntab.active{color:var(--accent);border-color:var(--accent);background:rgba(240,165,0,0.07);}
+.tuser{margin-left:auto;display:flex;align-items:center;gap:8px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--text-dim);}
+.ubdg{padding:2px 8px;font-size:9px;letter-spacing:1px;}
+.badmin{background:rgba(240,165,0,0.15);color:var(--accent);border:1px solid var(--accent);}
+.bview{background:rgba(46,156,255,0.1);color:var(--blue);border:1px solid var(--blue);}
+.obtn{background:none;border:1px solid var(--border);color:var(--text-dim);padding:3px 8px;font-family:"IBM Plex Mono",monospace;font-size:9px;cursor:pointer;}
+.mc{padding:20px;max-width:1440px;margin:0 auto;}
+.ph{margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:14px;}
+.pt{font-family:"Bebas Neue",sans-serif;font-size:34px;letter-spacing:4px;color:var(--text);}
+.pt span{color:var(--accent);}
+.ps{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--text-dim);letter-spacing:2px;margin-bottom:2px;}
+.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.srch{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:7px 12px;font-family:"IBM Plex Mono",monospace;font-size:12px;outline:none;flex:1;min-width:180px;}
+.srch:focus{border-color:var(--accent);}
+.fsel{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:7px 10px;font-family:"IBM Plex Mono",monospace;font-size:11px;outline:none;cursor:pointer;}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:16px;}
+.sc{background:var(--surface);border:1px solid var(--border);padding:12px;}
+.sl{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:5px;}
+.sv{font-family:"Bebas Neue",sans-serif;font-size:26px;letter-spacing:2px;color:var(--accent);}
+.vtable-wrap{overflow-x:auto;}
+.vtable{width:100%;border-collapse:collapse;}
+.vtable th{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:2px;color:var(--text-dim);text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);text-transform:uppercase;background:var(--bg);white-space:nowrap;}
+.vtable td{padding:9px 10px;border-bottom:1px solid var(--text-muted);font-family:"IBM Plex Mono",monospace;font-size:11px;white-space:nowrap;}
+.vtable tr:hover td{background:var(--surface2);}
+.vtable tr.row-urgent td{background:rgba(255,68,68,0.04);}
+.vtable tr.row-warn td{background:rgba(255,140,0,0.04);}
+.td-r{text-align:right;}.td-acc{color:var(--accent);font-weight:600;}.td-grn{color:var(--green);}.td-red{color:var(--red);}.td-ora{color:var(--orange);}.td-blue{color:var(--blue);}.td-dim{color:var(--text-dim);}
+.badge{display:inline-block;padding:2px 6px;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;border:1px solid;}
+.badge-ok{color:var(--green);border-color:var(--green);background:rgba(0,201,122,0.08);}
+.badge-warn{color:var(--orange);border-color:var(--orange);background:rgba(255,140,0,0.08);}
+.badge-urgent{color:var(--red);border-color:var(--red);background:rgba(255,68,68,0.08);}
+.detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;}
+.detail-overlay.show{display:flex;}
+.detail-box{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent);width:100%;max-width:720px;margin:auto;}
+.detail-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
+.detail-title{font-family:"Bebas Neue",sans-serif;font-size:22px;letter-spacing:3px;color:var(--accent);}
+.detail-sub{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--text-dim);margin-top:2px;}
+.close-btn{background:none;border:1px solid var(--border);color:var(--text-dim);padding:5px 10px;font-family:"IBM Plex Mono",monospace;font-size:10px;cursor:pointer;}
+.detail-body{padding:16px 20px;}
+.dtabs{display:flex;gap:3px;margin-bottom:16px;border-bottom:1px solid var(--border);}
+.dtab{padding:7px 14px;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:2px;cursor:pointer;border:1px solid transparent;color:var(--text-dim);background:none;text-transform:uppercase;border-bottom:none;margin-bottom:-1px;}
+.dtab.active{color:var(--accent);border-color:var(--border);border-bottom-color:var(--surface);background:var(--surface);}
+.dpanel{display:none;}.dpanel.active{display:block;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.di{background:var(--bg);border:1px solid var(--border);padding:10px 12px;}
+.di-label{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;}
+.di-val{font-family:"IBM Plex Mono",monospace;font-size:13px;}
+.prog-wrap{margin-bottom:14px;}
+.prog-label{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--text-dim);margin-bottom:4px;display:flex;justify-content:space-between;}
+.prog-bar{height:4px;background:var(--border);}.prog-fill{height:100%;}
+.cari-sec{margin-bottom:16px;}
+.cari-title{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:3px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.cari-title::after{content:"";flex:1;height:1px;background:var(--border);}
+.ctable{width:100%;border-collapse:collapse;}
+.ctable th{font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--text-dim);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);text-transform:uppercase;background:var(--bg);}
+.ctable td{padding:8px;border-bottom:1px solid var(--text-muted);font-family:"IBM Plex Mono",monospace;font-size:11px;}
+.ctable tr:hover td{background:var(--surface2);}
+.cparca{color:var(--blue);font-size:10px;}.cadet{color:var(--accent);text-align:right;}
+.cbadge{display:inline-block;padding:1px 5px;font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;border:1px solid;}
+.cbf{color:var(--purple);border-color:var(--purple);}.cby{color:var(--blue);border-color:var(--blue);}
+.notbox{background:rgba(240,165,0,0.08);border:1px solid rgba(240,165,0,0.3);padding:10px 12px;margin-top:8px;}
+.notbox p{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--accent);line-height:1.6;}
+.uf{background:var(--bg);border:1px solid var(--border);padding:14px;}
+.uf h4{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.fi label{display:block;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;}
+.fi input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 10px;font-family:"IBM Plex Mono",monospace;font-size:12px;outline:none;color-scheme:dark;}
+.fi input:focus{border-color:var(--accent);}
+.fi input[readonly]{background:var(--surface2);color:var(--text-dim);}
+.upbtn{background:var(--accent);color:#000;border:none;padding:9px 20px;font-family:"Bebas Neue",sans-serif;font-size:15px;letter-spacing:3px;cursor:pointer;}
+.hist-title{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:3px;color:var(--text-dim);text-transform:uppercase;margin:14px 0 8px;display:flex;align-items:center;gap:8px;}
+.hist-title::after{content:"";flex:1;height:1px;background:var(--border);}
+.ht{width:100%;border-collapse:collapse;}
+.ht th{font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--text-dim);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);text-transform:uppercase;background:var(--bg);white-space:nowrap;}
+.ht td{padding:7px 8px;border-bottom:1px solid var(--text-muted);font-family:"IBM Plex Mono",monospace;font-size:10px;white-space:nowrap;}
+.delbtn{background:none;border:1px solid var(--border);color:var(--text-dim);padding:2px 6px;font-family:"IBM Plex Mono",monospace;font-size:8px;cursor:pointer;}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.as{background:var(--surface);border:1px solid var(--border);padding:16px;}
+.as h3{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.ul{display:flex;flex-direction:column;gap:5px;}
+.ui{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border:1px solid var(--border);}
+.un{font-family:"IBM Plex Mono",monospace;font-size:11px;flex:1;}
+.ur{font-family:"IBM Plex Mono",monospace;font-size:9px;padding:2px 6px;border:1px solid;}
+.ra{color:var(--accent);border-color:var(--accent);}.rv{color:var(--blue);border-color:var(--blue);}
+.dub{background:none;border:1px solid var(--border);color:var(--text-dim);padding:2px 7px;font-family:"IBM Plex Mono",monospace;font-size:8px;cursor:pointer;}
+.auf{display:flex;flex-direction:column;gap:10px;}
+.auf input,.auf select{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;font-family:"IBM Plex Mono",monospace;font-size:12px;outline:none;appearance:none;}
+.aub{background:var(--accent);color:#000;border:none;padding:9px;font-family:"Bebas Neue",sans-serif;font-size:15px;letter-spacing:3px;cursor:pointer;}
+.sysinfo{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--text-dim);line-height:2.2;}
+.nd{text-align:center;padding:32px;font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--text-dim);letter-spacing:2px;}
+#toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--green);color:var(--green);padding:10px 16px;font-family:"IBM Plex Mono",monospace;font-size:11px;z-index:9999;display:none;}
+#toast.e{border-color:var(--red);color:var(--red);}
+.tab-section{display:none;}.tab-section.active{display:block;}
+.sync-status{position:fixed;bottom:20px;left:20px;background:var(--surface);border:1px solid var(--border);padding:6px 12px;font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--text-dim);z-index:9998;}
+::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--border);}
+@media(max-width:700px){.admin-grid,.detail-grid,.fg{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="logo">KAMYON BAKIM<span>TAKİP SİSTEMİ v2.0 FB</span></div>
+  <div class="lbox">
+    <h2>// SİSTEM GİRİŞİ</h2>
+    <div class="lf"><label>Kullanıcı Adı</label><input type="text" id="lu" placeholder="admin" autocomplete="off"></div>
+    <div class="lf"><label>Şifre</label><input type="password" id="lp" placeholder="••••••••"></div>
+    <button class="lbtn" id="lbtn" disabled>GİRİŞ YAP</button>
+    <div class="lerr" id="lerr">Kullanıcı adı veya şifre yanlış</div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="tlogo">KBT</div><div class="tdiv"></div>
+    <div class="ntabs">
+      <button class="ntab active" data-tab="tab-mrc">🚛 MERCEDES</button>
+      <button class="ntab" data-tab="tab-rn">🚚 RENAULT</button>
+      <button class="ntab" data-tab="tab-vl">🔵 VOLVO</button>
+      <button class="ntab" data-tab="tab-az">🚒 ARAZÖZ</button>
+      <button class="ntab" data-tab="tab-report">📊 RAPOR</button>
+      <button class="ntab" data-tab="tab-admin" id="atab" style="display:none">🔐 YÖNETİM</button>
+    </div>
+    <div class="tuser"><span id="tun"></span><span class="ubdg" id="tbdg"></span><button class="obtn" id="lout">ÇIKIŞ</button></div>
+  </div>
+  <div class="mc">
+    <div class="tab-section active" id="tab-mrc">
+      <div class="ph"><div class="ps">// MERCEDES ARAÇLARI</div><div class="pt"><span>MERCEDES</span> FİLOSU</div></div>
+      <div class="filters"><input type="text" class="srch" id="srch-mrc" placeholder="Plaka veya kod ara..." oninput="renderTable('mrc')">
+        <select class="fsel" id="fsel-mrc" onchange="renderTable('mrc')"><option value="all">Tüm Durumlar</option><option value="urgent">ACİL</option><option value="warn">YAKLAŞAN</option><option value="ok">NORMAL</option></select></div>
+      <div class="stats-row" id="stats-mrc"></div>
+      <div class="vtable-wrap"><table class="vtable"><thead id="thead-mrc"></thead><tbody id="tbody-mrc"></tbody></table></div>
+    </div>
+    <div class="tab-section" id="tab-rn">
+      <div class="ph"><div class="ps">// RENAULT ARAÇLARI</div><div class="pt"><span>RENAULT</span> FİLOSU</div></div>
+      <div class="filters"><input type="text" class="srch" id="srch-rn" placeholder="Plaka veya kod ara..." oninput="renderTable('rn')">
+        <select class="fsel" id="fsel-rn" onchange="renderTable('rn')"><option value="all">Tüm Durumlar</option><option value="urgent">ACİL</option><option value="warn">YAKLAŞAN</option><option value="ok">NORMAL</option></select></div>
+      <div class="stats-row" id="stats-rn"></div>
+      <div class="vtable-wrap"><table class="vtable"><thead id="thead-rn"></thead><tbody id="tbody-rn"></tbody></table></div>
+    </div>
+    <div class="tab-section" id="tab-vl">
+      <div class="ph"><div class="ps">// VOLVO ARAÇLARI</div><div class="pt"><span>VOLVO</span> FİLOSU</div></div>
+      <div class="filters"><input type="text" class="srch" id="srch-vl" placeholder="Plaka veya kod ara..." oninput="renderTable('vl')">
+        <select class="fsel" id="fsel-vl" onchange="renderTable('vl')"><option value="all">Tüm Durumlar</option><option value="urgent">ACİL</option><option value="warn">YAKLAŞAN</option><option value="ok">NORMAL</option></select></div>
+      <div class="stats-row" id="stats-vl"></div>
+      <div class="vtable-wrap"><table class="vtable"><thead id="thead-vl"></thead><tbody id="tbody-vl"></tbody></table></div>
+    </div>
+    <div class="tab-section" id="tab-az">
+      <div class="ph"><div class="ps">// ARAZÖZ ARAÇLARI</div><div class="pt"><span>ARAZÖZ</span> FİLOSU</div></div>
+      <div class="filters"><input type="text" class="srch" id="srch-az" placeholder="Plaka veya kod ara..." oninput="renderTable('az')">
+        <select class="fsel" id="fsel-az" onchange="renderTable('az')"><option value="all">Tüm Durumlar</option><option value="urgent">ACİL</option><option value="warn">YAKLAŞAN</option><option value="ok">NORMAL</option></select></div>
+      <div class="stats-row" id="stats-az"></div>
+      <div class="vtable-wrap"><table class="vtable"><thead id="thead-az"></thead><tbody id="tbody-az"></tbody></table></div>
+    </div>
+    <div class="tab-section" id="tab-report">
+      <div class="ph"><div class="ps">// ANALİZ & RAPORLAMA</div><div class="pt">RAPOR <span>PANELİ</span></div></div>
+      <div id="report-content"></div>
+    </div>
+    <div class="tab-section" id="tab-admin">
+      <div class="ph"><div class="ps">// SİSTEM YÖNETİMİ</div><div class="pt">ADMİN <span>PANELİ</span></div></div>
+      <div class="admin-grid">
+        <div class="as"><h3>// KULLANICI LİSTESİ</h3><div class="ul" id="ulist"></div></div>
+        <div class="as"><h3>// YENİ KULLANICI</h3>
+          <div class="auf">
+            <input type="text" id="nu" placeholder="Kullanıcı adı">
+            <input type="password" id="np" placeholder="Şifre">
+            <select id="nr"><option value="viewer">İzleyici</option><option value="admin">Admin</option></select>
+            <button class="aub" id="aubtn">KULLANICI EKLE</button>
+          </div>
+        </div>
+        <div class="as"><h3>// SİSTEM BİLGİSİ</h3><div class="sysinfo" id="sysinfo"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-box">
+    <div class="detail-header">
+      <div><div class="detail-title" id="d-title"></div><div class="detail-sub" id="d-sub"></div></div>
+      <button class="close-btn" id="close-btn">✕ KAPAT</button>
+    </div>
+    <div class="detail-body">
+      <div class="dtabs">
+        <button class="dtab active" data-panel="bakim">📊 BAKIM TAKİP</button>
+        <button class="dtab" data-panel="cari">🔧 CARİ KART</button>
+        <button class="dtab" data-panel="guncelle">✏ GÜNCELLE</button>
+      </div>
+      <div class="dpanel active" id="dpanel-bakim"></div>
+      <div class="dpanel" id="dpanel-cari"></div>
+      <div class="dpanel" id="dpanel-guncelle"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div class="sync-status" id="sync-status">🔄 Firebase bağlanıyor...</div>
+
+<script>
+// ===== FIREBASE YAPILANDIRMASI - KENDİ BİLGİLERİNİZLE GÜNCELLEYİN! =====
+const firebaseConfig = {
+  apiKey: "AIzaSyB9jDaJgU7S_0S2N6O8dZf0z5xq8j3c2V1",
+  authDomain: "kamyon-bakim-takip.firebaseapp.com",
+  projectId: "kamyon-bakim-takip",
+  storageBucket: "kamyon-bakim-takip.appspot.com",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:abc123def456ghi789"
+};
+// Yukarıdaki örnek bilgileri KENDİ PROJENİZİN bilgileriyle değiştirin!
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// ===== VERİ =====
+const EXCEL_DATA = {
+  mercedes: [{model:"2021",marka:"MERCEDES 4851",plaka:"72 ABP 707",kod:"NO 1",guncel_km:139997,bakim_km:139997,bakim_saat:13900,guncel_saat:13954,kalan_saat:696,kalan_km:10000,bakim_tarihi:"2026-04-04",muayene_tarihi:"2026-11-21",konum:""},{model:"2021",marka:"MERCEDES 4851",plaka:"72 ABP 670",kod:"NO 5",guncel_km:158320,bakim_km:153000,bakim_saat:14378,guncel_saat:15058,kalan_saat:70,kalan_km:4680,bakim_tarihi:"2025-10-08",muayene_tarihi:"2025-09-22",konum:"HARIMCIK"}],
+  renault: [{model:"2023",marka:"RENAULT 520",plaka:"06 EBU 872",kod:"NO 26",guncel_km:42121,bakim_km:42121,bakim_saat:4477,guncel_saat:5164,kalan_saat:63,kalan_km:10000,bakim_tarihi:"2025-12-08",muayene_tarihi:"2027-02-13"}],
+  volvo: [{model:"2023",marka:"VOLVO 500FMX",plaka:"72 ABL 339",kod:"NO 9",guncel_km:83464,bakim_km:79518,bakim_saat:7195,guncel_saat:7841,kalan_saat:104,kalan_km:0,bakim_tarihi:"2025-09-18",muayene_tarihi:"2026-08-19"}],
+  arazoz: [{model:"",marka:"FORD CARGO",plaka:"06 CGE 606",kod:"A-2",guncel_km:58900,bakim_km:57088,bakim_saat:0,guncel_saat:0,kalan_saat:750,kalan_km:0,bakim_tarihi:"2025-09-07",muayene_tarihi:"2026-05-26"}]
+};
+const DEFAULT_CARI_DATA = {"72 ABP 707":{filtreler:[],yaglar:[{isim:"MOTOR YAĞI 10W/40",parca_no:"",adet:"40 L"}],notlar:["750 SAAT BAKIM!"]}};
+
+let currentUser = null, firebaseReady = false, localStore = { users: {admin: {username:'admin', password:'admin123', role:'admin'}}, updates: {}, cari: JSON.parse(JSON.stringify(DEFAULT_CARI_DATA)) }, vehiclesCache = {};
+const TABS = {mrc:'mercedes', rn:'renault', vl:'volvo', az:'arazoz'}, td = () => new Date().toISOString().split('T')[0];
+
+async function initFirebase() {
+  const loginBtn = document.getElementById('lbtn');
+  const statusEl = document.getElementById('sync-status');
+  try {
+    await auth.signInAnonymously();
+    await loadFromFirebase();
+    firebaseReady = true;
+    statusEl.textContent = '✅ Çevrimiçi';
+    statusEl.style.color = 'var(--green)';
+    loginBtn.disabled = false;
+    loginBtn.classList.add('active');
+    setupRealtimeListeners();
+  } catch (error) {
+    console.error('Firebase hatası:', error);
+    statusEl.textContent = '⚠️ Çevrimdışı - LocalStorage';
+    statusEl.style.color = 'var(--orange)';
+    loadFromLocalStorage();
+    firebaseReady = false;
+    loginBtn.disabled = false;
+    loginBtn.classList.add('active');
+  }
+}
+async function loadFromFirebase() {
+  const usersSnap = await db.collection('users').get(), users = {};
+  usersSnap.forEach(d => users[d.id] = d.data());
+  if(!users.admin) { await db.collection('users').doc('admin').set({username:'admin',password:'admin123',role:'admin'}); users.admin = {username:'admin',password:'admin123',role:'admin'}; }
+  localStore.users = users;
+  const updSnap = await db.collection('updates').get(), updates = {};
+  updSnap.forEach(d => updates[d.id] = d.data()); localStore.updates = updates;
+  const cariSnap = await db.collection('cari').get(), cari = {};
+  cariSnap.forEach(d => cari[d.id] = d.data());
+  for(let [p,d] of Object.entries(DEFAULT_CARI_DATA)) if(!cari[p]) { await db.collection('cari').doc(p).set(d); cari[p] = d; }
+  localStore.cari = cari;
+}
+function setupRealtimeListeners() {
+  db.collection('users').onSnapshot(s => { const u={}; s.forEach(d=>u[d.id]=d.data()); localStore.users=u; if(currentUser) renderUList(); });
+  db.collection('updates').onSnapshot(s => { const u={}; s.forEach(d=>u[d.id]=d.data()); localStore.updates=u; vehiclesCache={}; Object.keys(TABS).forEach(k=>renderTable(k)); });
+  db.collection('cari').onSnapshot(s => { const c={}; s.forEach(d=>c[d.id]=d.data()); localStore.cari=c; Object.keys(TABS).forEach(k=>renderTable(k)); });
+}
+async function saveToFirebase(col, id, data) { if(!firebaseReady) { saveToLocalStorage(); return; } try { await db.collection(col).doc(id).set(data,{merge:true}); } catch(e) { saveToLocalStorage(); } }
+function loadFromLocalStorage() { try { const d=JSON.parse(localStorage.getItem('kbt_v2_fb')); if(d) localStore=d; } catch(e) {} }
+function saveToLocalStorage() { try { localStorage.setItem('kbt_v2_fb', JSON.stringify(localStore)); } catch(e) {} }
+
+function toast(m,e){ const t=document.getElementById('toast'); t.textContent=(e?'⚠️ ':'✓ ')+m; t.className=e?'e':''; t.style.display='block'; clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none',3000); }
+function sOf(v){ const k=v.kalan_saat,m=v.kalan_km; if(k<=0||m<=0) return'urgent'; if(k<=100||m<=1000) return'urgent'; if(k<=200||m<=2000) return'warn'; return'ok'; }
+function sBadge(v){ const s=sOf(v); return s==='urgent'?'<span class="badge badge-urgent">ACİL</span>':s==='warn'?'<span class="badge badge-warn">YAKLAŞIYOR</span>':'<span class="badge badge-ok">NORMAL</span>'; }
+function mStat(d){ if(!d) return'<span class="td-dim">—</span>'; const f=(new Date(d)-new Date())/(864e5); return f<0?'<span class="td-red">GEÇMİŞ</span>':f<30?'<span class="td-ora">'+d+'</span>':'<span class="td-grn">'+d+'</span>'; }
+function nc(v,w,u){ w=w||200; u=u||100; return v<=0?'td-red':v<=u?'td-red':v<=w?'td-ora':'td-grn'; }
+function getV(type){ if(vehiclesCache[type]) return vehiclesCache[type]; const base=EXCEL_DATA[type]||[]; const vehicles=base.map(v=>{ const k=type+'_'+v.plaka.replace(/\s+/g,'_'); const u=localStore.updates[k]; return u?{...v,...u,plaka:v.plaka,kod:v.kod,marka:v.marka,model:v.model}:{...v}; }); vehiclesCache[type]=vehicles; return vehicles; }
+
+function renderTable(key){
+  const type=TABS[key], vehicles=getV(type);
+  const srch=((document.getElementById('srch-'+key)||{}).value||'').toLowerCase();
+  const fsel=(document.getElementById('fsel-'+key)||{}).value||'all';
+  const urg=vehicles.filter(v=>sOf(v)==='urgent').length, wrn=vehicles.filter(v=>sOf(v)==='warn').length, ok=vehicles.filter(v=>sOf(v)==='ok').length;
+  const se=document.getElementById('stats-'+key);
+  if(se) se.innerHTML=`<div class="sc"><div class="sl">Toplam</div><div class="sv">${vehicles.length}</div></div><div class="sc"><div class="sl">ACİL</div><div class="sv" style="color:var(--red)">${urg}</div></div><div class="sc"><div class="sl">YAKLAŞAN</div><div class="sv" style="color:var(--orange)">${wrn}</div></div><div class="sc"><div class="sl">NORMAL</div><div class="sv" style="color:var(--green)">${ok}</div></div>`;
+  const filtered=vehicles.filter(v=>{ const m=!srch||v.plaka.toLowerCase().includes(srch)||v.kod.toLowerCase().includes(srch)||v.marka.toLowerCase().includes(srch); return m&&(fsel==='all'||sOf(v)===fsel); });
+  const th=document.getElementById('thead-'+key), tb=document.getElementById('tbody-'+key);
+  if(!th||!tb) return;
+  th.innerHTML='<tr><th>KOD</th><th>PLAKA</th><th>MARKA</th><th class="td-r">G.KM</th><th class="td-r">G.SAAT</th><th class="td-r">K.SAAT</th><th class="td-r">K.KM</th><th>SON BAKIM</th><th>MUAYENE</th><th>DURUM</th></tr>';
+  if(!filtered.length){ tb.innerHTML='<tr><td colspan="10" class="nd">— Araç bulunamadı —</td></tr>'; return; }
+  tb.innerHTML=filtered.map(v=>{ const s=sOf(v), hasCari=localStore.cari&&localStore.cari[v.plaka]&&((localStore.cari[v.plaka].filtreler&&localStore.cari[v.plaka].filtreler.length>0)||(localStore.cari[v.plaka].yaglar&&localStore.cari[v.plaka].yaglar.length>0)); return `<tr class="row-${s}" style="cursor:pointer" data-type="${type}" data-plaka="${v.plaka}"><td class="td-acc">${v.kod}</td><td class="td-blue">${v.plaka}${hasCari?' <span style="color:var(--purple);font-size:9px">●</span>':''}</td><td>${v.marka}${v.model?' '+v.model:''}</td><td class="td-r">${(v.guncel_km||0).toLocaleString('tr-TR')}</td><td class="td-r">${(v.guncel_saat||0).toLocaleString('tr-TR')}</td><td class="td-r ${nc(v.kalan_saat)}">${v.kalan_saat}</td><td class="td-r ${nc(v.kalan_km,2000,500)}">${v.kalan_km}</td><td>${v.bakim_tarihi||'—'}</td><td>${mStat(v.muayene_tarihi)}</td><td>${sBadge(v)}</td></tr>`; }).join('');
+  tb.querySelectorAll('tr').forEach(r=>r.addEventListener('click',()=>openDetail(r.dataset.type,r.dataset.plaka)));
+}
+
+let _curType='',_curPlaka='';
+function openDetail(type,plaka){
+  _curType=type;_curPlaka=plaka; const v=getV(type).find(x=>x.plaka===plaka); if(!v) return;
+  document.getElementById('d-title').textContent=v.plaka; document.getElementById('d-sub').textContent=`${v.kod} · ${v.marka}${v.model?' · '+v.model:''}${v.konum?' · '+v.konum:''}`;
+  const ia=currentUser&&currentUser.role==='admin', s=sOf(v), sc=s==='urgent'?'var(--red)':s==='warn'?'var(--orange)':'var(--green)', pct=v.kalan_saat>0?Math.max(0,Math.min(100,(v.kalan_saat/750)*100)):0;
+  document.getElementById('dpanel-bakim').innerHTML=`<div class="detail-grid"><div class="di"><div class="di-label">Güncel KM</div><div class="di-val" style="color:var(--accent)">${(v.guncel_km||0).toLocaleString('tr-TR')} km</div></div><div class="di"><div class="di-label">Güncel Saat</div><div class="di-val" style="color:var(--accent)">${(v.guncel_saat||0).toLocaleString('tr-TR')} saat</div></div><div class="di"><div class="di-label">Son Bakım KM</div><div class="di-val">${(v.bakim_km||0).toLocaleString('tr-TR')} km</div></div><div class="di"><div class="di-label">Son Bakım Saati</div><div class="di-val">${(v.bakim_saat||0).toLocaleString('tr-TR')} saat</div></div><div class="di"><div class="di-label">Kalan Saat</div><div class="di-val" style="color:${sc}">${v.kalan_saat} saat</div></div><div class="di"><div class="di-label">Kalan KM</div><div class="di-val" style="color:${sc}">${v.kalan_km} km</div></div><div class="di"><div class="di-label">Son Bakım</div><div class="di-val">${v.bakim_tarihi||'—'}</div></div><div class="di"><div class="di-label">Muayene</div><div class="di-val">${v.muayene_tarihi||'—'}</div></div></div><div class="prog-wrap"><div class="prog-label"><span>Bakım Doluluk (750 saat)</span><span>${v.kalan_saat} saat kaldı</span></div><div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${sc}"></div></div></div><div class="hist-title">GÜNCELLEME GEÇMİŞİ</div>${renderHist(type,plaka,ia)}`;
+  document.getElementById('dpanel-cari').innerHTML=renderCariPanel(plaka,ia);
+  document.getElementById('dpanel-guncelle').innerHTML=ia?`<div class="uf"><h4>// GÜNCEL BİLGİ GİR</h4><div class="fg"><div class="fi"><label>Güncel KM</label><input type="number" id="upd-km" value="${v.guncel_km||0}" oninput="hesaplaKalan()"></div><div class="fi"><label>Güncel Saat</label><input type="number" id="upd-saat" value="${v.guncel_saat||0}" oninput="hesaplaKalan()"></div><div class="fi"><label>Son Bakım KM</label><input type="number" id="upd-bkm" value="${v.bakim_km||0}" oninput="hesaplaKalan()"></div><div class="fi"><label>Son Bakım Saati</label><input type="number" id="upd-bsaat" value="${v.bakim_saat||0}" oninput="hesaplaKalan()"></div><div class="fi"><label>Kalan Saat</label><input type="number" id="upd-ks" value="${v.kalan_saat||0}" readonly style="background:var(--surface2);"></div><div class="fi"><label>Kalan KM</label><input type="number" id="upd-kk" value="${v.kalan_km||0}" readonly style="background:var(--surface2);"></div><div class="fi"><label>Son Bakım Tarihi</label><input type="date" id="upd-bt" value="${v.bakim_tarihi||''}"></div><div class="fi"><label>Muayene Tarihi</label><input type="date" id="upd-mt" value="${v.muayene_tarihi||''}"></div></div><button class="upbtn" id="savebtn">KAYDET</button></div>`:'<div class="nd">ℹ Admin yetkisi gerekli</div>';
+  if(ia) document.getElementById('savebtn').onclick=()=>saveUpd();
+  document.getElementById('detail-overlay').classList.add('show');
+  document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.dpanel').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.dtab').classList.add('active'); document.getElementById('dpanel-bakim').classList.add('active');
+}
+function hesaplaKalan(){
+  const g=parseFloat(document.getElementById('upd-km')?.value)||0, s=parseFloat(document.getElementById('upd-saat')?.value)||0, bk=parseFloat(document.getElementById('upd-bkm')?.value)||0, bs=parseFloat(document.getElementById('upd-bsaat')?.value)||0;
+  const kk=Math.max(0,(bk+10000)-g), ks=Math.max(0,(bs+750)-s);
+  const ksIn=document.getElementById('upd-ks'), kkIn=document.getElementById('upd-kk');
+  if(ksIn){ ksIn.value=ks; ksIn.style.color=ks<=0?'var(--red)':ks<=100?'var(--red)':ks<=200?'var(--orange)':'var(--green)'; }
+  if(kkIn){ kkIn.value=kk; kkIn.style.color=kk<=0?'var(--red)':kk<=1000?'var(--red)':kk<=2000?'var(--orange)':'var(--green)'; }
+}
+function renderHist(type,plaka,ia){
+  const k=type+'_'+plaka.replace(/\s+/g,'_'), u=localStore.updates[k]; if(!u||!u.history||!u.history.length) return'<div class="nd" style="padding:14px">— Güncelleme geçmişi yok —</div>';
+  const rows=[...u.history].reverse().map((h,i)=>`<tr><td>${h.tarih}</td><td class="td-r">${(h.guncel_km||0).toLocaleString('tr-TR')}</td><td class="td-r">${(h.guncel_saat||0).toLocaleString('tr-TR')}</td><td class="td-r" style="color:var(--${h.kalan_saat<=100?'red':h.kalan_saat<=200?'orange':'green'})">${h.kalan_saat||0}</td><td>${h.bakim_tarihi||'—'}</td><td>${h.kullanici||'—'}</td>${ia?'<td><button class="delbtn" data-i="'+i+'">SİL</button></td>':''}</tr>`).join('');
+  setTimeout(()=>document.querySelectorAll('.delbtn').forEach(b=>b.onclick=()=>delHist(type,plaka,parseInt(b.dataset.i))),0);
+  return `<table class="ht"><thead><tr><th>Tarih</th><th class="td-r">KM</th><th class="td-r">Saat</th><th class="td-r">Kalan</th><th>Bakım</th><th>Kullanıcı</th>${ia?'<th></th>':''}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+async function saveUpd(){
+  const k=_curType+'_'+_curPlaka.replace(/\s+/g,'_'), km=parseInt(document.getElementById('upd-km').value)||0, saat=parseInt(document.getElementById('upd-saat').value)||0, bkm=parseInt(document.getElementById('upd-bkm').value)||0, bsaat=parseInt(document.getElementById('upd-bsaat').value)||0, ks=parseInt(document.getElementById('upd-ks').value)||0, kk=parseInt(document.getElementById('upd-kk').value)||0, bt=document.getElementById('upd-bt').value||'', mt=document.getElementById('upd-mt').value||'';
+  const ex=localStore.updates[k]||{}, hist=ex.history||[]; hist.push({tarih:td(),guncel_km:km,guncel_saat:saat,kalan_saat:ks,bakim_tarihi:bt,kullanici:currentUser.username});
+  const upd={plaka:_curPlaka,type:_curType,guncel_km:km,guncel_saat:saat,bakim_km:bkm,bakim_saat:bsaat,kalan_saat:ks,kalan_km:kk,bakim_tarihi:bt,muayene_tarihi:mt,son_guncelleme:td(),history:hist};
+  localStore.updates[k]=upd; vehiclesCache={}; await saveToFirebase('updates',k,upd); toast('Güncellendi: '+_curPlaka); closeDetail(); Object.keys(TABS).forEach(k=>renderTable(k));
+}
+async function delHist(type,plaka,idx){ if(!confirm('Silinsin mi?')) return; const k=type+'_'+plaka.replace(/\s+/g,'_'), u=localStore.updates[k]; if(!u) return; u.history.splice(u.history.length-1-idx,1); await saveToFirebase('updates',k,u); toast('Kayıt silindi'); openDetail(type,plaka); }
+function closeDetail(){ document.getElementById('detail-overlay').classList.remove('show'); }
+
+function renderCariPanel(plaka,ia){
+  const c=localStore.cari?.[plaka]||{filtreler:[],yaglar:[],notlar:[]}; let h='';
+  if(ia) h+=`<div style="display:flex;gap:8px;margin-bottom:16px;"><button class="obtn" onclick="cariEkle('${plaka}','filtre')">+ FİLTRE</button><button class="obtn" onclick="cariEkle('${plaka}','yag')">+ YAĞ</button><button class="obtn" onclick="cariNotEkle('${plaka}')">+ NOT</button></div>`;
+  if(c.filtreler?.length){ h+='<div class="cari-sec"><div class="cari-title">FİLTRELER</div><table class="ctable"><thead><tr><th></th><th>Filtre Adı</th><th>Parça No</th><th>Adet</th>'+(ia?'<th></th>':'')+'</tr></thead><tbody>';
+    c.filtreler.forEach((f,i)=>{ h+=`<tr><td><span class="cbadge cbf">FLT</span></td><td>${ia?`<input id="filtre_isim_${i}" value="${f.isim||''}" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;">`:f.isim||'—'}</td><td>${ia?`<input id="filtre_parca_${i}" value="${f.parca_no||''}" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;">`:f.parca_no||'—'}</td><td>${ia?`<input id="filtre_adet_${i}" value="${f.adet||''}" style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;">`:f.adet||'—'}</td>${ia?`<td><button class="delbtn" onclick="cariSil('${plaka}','filtre',${i})">✕</button></td>`:''}</tr>`; });
+    h+='</tbody></table>'; if(ia) h+=`<button class="obtn" onclick="cariKaydetFiltreler('${plaka}')" style="margin-top:8px;width:100%;">KAYDET</button>`; h+='</div>';
+  } else h+='<div class="cari-sec"><div class="cari-title">FİLTRELER</div><div class="nd" style="padding:14px">— Filtre yok —</div></div>';
+  if(c.yaglar?.length){ h+='<div class="cari-sec"><div class="cari-title">YAĞLAR</div><table class="ctable"><thead><tr><th></th><th>Yağ Adı</th><th>Parça No</th><th>Miktar</th>'+(ia?'<th></th>':'')+'</tr></thead><tbody>';
+    c.yaglar.forEach((y,i)=>{ h+=`<tr><td><span class="cbadge cby">YAĞ</span></td><td>${ia?`<input id="yag_isim_${i}" value="${y.isim||''}" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;">`:y.isim||'—'}</td><td>${ia?`<input id="yag_parca_${i}" value="${y.parca_no||''}" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;">`:y.parca_no||'—'}</td><td>${ia?`<input id="yag_adet_${i}" value="${y.adet||''}" style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;">`:y.adet||'—'}</td>${ia?`<td><button class="delbtn" onclick="cariSil('${plaka}','yag',${i})">✕</button></td>`:''}</tr>`; });
+    h+='</tbody></table>'; if(ia) h+=`<button class="obtn" onclick="cariKaydetYaglar('${plaka}')" style="margin-top:8px;width:100%;">KAYDET</button>`; h+='</div>';
+  } else h+='<div class="cari-sec"><div class="cari-title">YAĞLAR</div><div class="nd" style="padding:14px">— Yağ yok —</div></div>';
+  if(c.notlar?.length){ h+='<div class="cari-sec"><div class="cari-title">NOTLAR</div><div class="notbox">';
+    c.notlar.forEach((n,i)=>{ if(ia) h+=`<div style="display:flex;gap:8px;margin-bottom:8px;"><input id="not_${i}" value="${n}" style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px;"><button class="delbtn" onclick="cariSil('${plaka}','not',${i})">✕</button></div>`; else h+=`<p>${n}</p>`; });
+    if(ia) h+=`<button class="obtn" onclick="cariKaydetNotlar('${plaka}')" style="margin-top:8px;width:100%;">KAYDET</button>`; h+='</div></div>';
+  }
+  return h;
+}
+async function cariEkle(p,t){ if(!localStore.cari) localStore.cari={}; if(!localStore.cari[p]) localStore.cari[p]={filtreler:[],yaglar:[],notlar:[]}; if(t==='filtre') localStore.cari[p].filtreler.push({isim:'',parca_no:'',adet:''}); else if(t==='yag') localStore.cari[p].yaglar.push({isim:'',parca_no:'',adet:''}); await saveToFirebase('cari',p,localStore.cari[p]); openDetail(_curType,p); }
+async function cariNotEkle(p){ if(!localStore.cari) localStore.cari={}; if(!localStore.cari[p]) localStore.cari[p]={filtreler:[],yaglar:[],notlar:[]}; localStore.cari[p].notlar.push(''); await saveToFirebase('cari',p,localStore.cari[p]); openDetail(_curType,p); }
+async function cariSil(p,t,i){ if(!confirm('Silinsin mi?')) return; if(t==='filtre') localStore.cari[p].filtreler.splice(i,1); else if(t==='yag') localStore.cari[p].yaglar.splice(i,1); else if(t==='not') localStore.cari[p].notlar.splice(i,1); await saveToFirebase('cari',p,localStore.cari[p]); openDetail(_curType,p); }
+async function cariKaydetFiltreler(p){ localStore.cari[p].filtreler.forEach((f,i)=>{ f.isim=document.getElementById('filtre_isim_'+i)?.value||''; f.parca_no=document.getElementById('filtre_parca_'+i)?.value||''; f.adet=document.getElementById('filtre_adet_'+i)?.value||''; }); await saveToFirebase('cari',p,localStore.cari[p]); openDetail(_curType,p); }
+async function cariKaydetYaglar(p){ localStore.cari[p].yaglar.forEach((y,i)=>{ y.isim=document.getElementById('yag_isim_'+i)?.value||''; y.parca_no=document.getElementById('yag_parca_'+i)?.value||''; y.adet=document.getElementById('yag_adet_'+i)?.value||''; }); await saveToFirebase('cari',p,localStore.cari[p]); openDetail(_curType,p); }
+async function cariKaydetNotlar(p){ localStore.cari[p].notlar.forEach((n,i)=>{ localStore.cari[p].notlar[i]=document.getElementById('not_'+i)?.value||''; }); await saveToFirebase('cari',p,localStore.cari[p]); openDetail(_curType,p); }
+
+function renderReport(){
+  const all=[...getV('mercedes').map(v=>({...v,_t:'Mercedes'})),...getV('renault').map(v=>({...v,_t:'Renault'})),...getV('volvo').map(v=>({...v,_t:'Volvo'})),...getV('arazoz').map(v=>({...v,_t:'Arazöz'}))];
+  const urg=all.filter(v=>sOf(v)==='urgent'), wrn=all.filter(v=>sOf(v)==='warn');
+  const stats=`<div class="stats-row"><div class="sc"><div class="sl">Toplam</div><div class="sv">${all.length}</div></div><div class="sc"><div class="sl">ACİL</div><div class="sv" style="color:var(--red)">${urg.length}</div></div><div class="sc"><div class="sl">YAKLAŞAN</div><div class="sv" style="color:var(--orange)">${wrn.length}</div></div></div>`;
+  const ur=[...urg,...wrn].sort((a,b)=>a.kalan_saat-b.kalan_saat).map(v=>`<tr class="row-${sOf(v)}"><td>${v.kod}</td><td>${v.plaka}</td><td>${v._t}</td><td class="td-r ${nc(v.kalan_saat)}">${v.kalan_saat}</td><td class="td-r ${nc(v.kalan_km,2000,500)}">${v.kalan_km}</td><td>${v.bakim_tarihi||'—'}</td><td>${sBadge(v)}</td></tr>`).join('');
+  document.getElementById('report-content').innerHTML=stats+`<div style="margin:16px 0 10px;color:var(--accent);">// ACİL & YAKLAŞAN BAKIMLAR</div><div class="vtable-wrap"><table class="vtable"><thead><tr><th>KOD</th><th>PLAKA</th><th>TİP</th><th>K.SAAT</th><th>K.KM</th><th>SON BAKIM</th><th>DURUM</th></tr></thead><tbody>${ur||'<tr><td colspan="7" class="nd">— Acil bakım yok —</td></tr>'}</tbody></table></div>`;
+}
+function renderUList(){ const el=document.getElementById('ulist'); if(!el) return; el.innerHTML=Object.values(localStore.users).map(u=>`<div class="ui"><div class="un">${u.username}</div><div class="ur ${u.role==='admin'?'ra':'rv'}">${u.role==='admin'?'ADMİN':'İZLEYİCİ'}</div>${u.username!=='admin'?`<button class="dub" data-u="${u.username}">SİL</button>`:''}</div>`).join(''); document.querySelectorAll('.dub').forEach(b=>b.onclick=async()=>{if(!confirm('Silinsin mi?'))return; await db.collection('users').doc(b.dataset.u).delete();}); }
+function sysInfo(){ document.getElementById('sysinfo').innerHTML=`Toplam Araç: <b>${Object.values(EXCEL_DATA).reduce((s,a)=>s+a.length,0)}</b><br>Güncelleme: <b>${Object.keys(localStore.updates).length}</b><br>Kullanıcı: <b>${Object.keys(localStore.users).length}</b><br>Versiyon: <b>KBT v2.0 FB</b>`; }
+
+document.getElementById('lbtn').onclick=()=>{ const u=document.getElementById('lu').value.trim(), p=document.getElementById('lp').value; const f=Object.values(localStore.users).find(x=>x.username===u&&x.password===p); if(!f){ document.getElementById('lerr').style.display='block'; return; } currentUser=f; document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; document.getElementById('tun').textContent=f.username; const b=document.getElementById('tbdg'); b.textContent=f.role==='admin'?'ADMİN':'İZLEYİCİ'; b.className='ubdg '+(f.role==='admin'?'badmin':'bview'); document.getElementById('atab').style.display=f.role==='admin'?'':'none'; Object.keys(TABS).forEach(k=>renderTable(k)); renderReport(); renderUList(); sysInfo(); };
+document.getElementById('lout').onclick=()=>{ currentUser=null; document.getElementById('login').style.display='flex'; document.getElementById('app').style.display='none'; };
+document.getElementById('aubtn').onclick=async()=>{ const u=document.getElementById('nu').value.trim(), p=document.getElementById('np').value, r=document.getElementById('nr').value; if(!u||!p){ toast('Ad ve şifre gerekli',true); return; } if(localStore.users[u]){ toast('Kullanıcı zaten var',true); return; } await db.collection('users').doc(u).set({username:u,password:p,role:r}); document.getElementById('nu').value=''; document.getElementById('np').value=''; toast('Eklendi: '+u); };
+
+document.querySelectorAll('.ntab').forEach(b=>b.addEventListener('click',()=>{ document.querySelectorAll('.tab-section').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active')); document.getElementById(b.dataset.tab).classList.add('active'); b.classList.add('active'); if(b.dataset.tab==='tab-report') renderReport(); if(b.dataset.tab==='tab-admin'){ renderUList(); sysInfo(); } }));
+document.querySelectorAll('.dtab').forEach(b=>b.addEventListener('click',()=>{ document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.dpanel').forEach(t=>t.classList.remove('active')); b.classList.add('active'); document.getElementById('dpanel-'+b.dataset.panel).classList.add('active'); }));
+document.getElementById('close-btn').onclick=closeDetail;
+document.getElementById('detail-overlay').addEventListener('click',e=>{ if(e.target===document.getElementById('detail-overlay')) closeDetail(); });
+
+initFirebase();
+</script>
+</body>
+</html>
