@@ -1,0 +1,8 @@
+{
+"name":"Bakım Takip PRO",
+"short_name":"Bakim",
+"start_url":"/",
+"display":"standalone",
+"background_color":"#0a0c0f",
+"theme_color":"#f0a500"
+}
