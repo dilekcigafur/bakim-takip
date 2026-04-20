@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <title>Bakım Takip PRO</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#f0a500">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body{background:#0a0c0f;color:#fff;font-family:Arial;margin:0;padding:20px}
 .card{background:#111;padding:15px;margin:10px 0;border-radius:10px}
-input,button,select{padding:10px;margin:5px;border-radius:6px;border:none}
+input,button{padding:10px;margin:5px;border-radius:6px;border:none}
 button{background:#f0a500;color:black;font-weight:bold}
 </style>
 </head>
@@ -16,13 +15,6 @@ button{background:#f0a500;color:black;font-weight:bold}
 
 <h2>🚛 Bakım Takip PRO</h2>
 
-<div id="login" class="card">
-<input id="username" placeholder="Kullanıcı adı">
-<input id="password" type="password" placeholder="Şifre">
-<button id="loginBtn">Giriş</button>
-</div>
-
-<div id="app" style="display:none;">
 <div class="card">
 <h3>Araç Ekle</h3>
 <input id="plaka" placeholder="Plaka">
@@ -35,13 +27,11 @@ button{background:#f0a500;color:black;font-weight:bold}
 <div id="list"></div>
 </div>
 
-<div class="card" id="adminPanel" style="display:none;">
+<div class="card">
 <h3>Admin Panel</h3>
 <input id="newUser" placeholder="username">
 <input id="newPass" placeholder="şifre">
 <button onclick="addUser()">Kullanıcı Ekle</button>
-</div>
-
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -50,47 +40,25 @@ button{background:#f0a500;color:black;font-weight:bold}
 
 <script>
 const firebaseConfig = {
- apiKey: "AIzaSyDgh520cc3hiSMxY33Vo-DV688KcY1U4W0",
- authDomain: "ab-a7b7e.firebaseapp.com",
- projectId: "ab-a7b7e"
+ apiKey: "YOUR_API_KEY",
+ authDomain: "YOUR_DOMAIN",
+ projectId: "YOUR_PROJECT"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-document.getElementById("loginBtn").onclick = async ()=>{
- const u = username.value;
- const p = password.value;
-
- const snap = await db.collection("users").where("username","==",u).get();
- if(snap.empty){alert("Kullanıcı yok");return;}
-
- const data = snap.docs[0].data();
- const email = data.email;
-
- try{
-  const res = await auth.signInWithEmailAndPassword(email,p);
-  login.style.display="none";
-  app.style.display="block";
-  loadVehicles();
-
-  if(data.role==="admin"){
-    adminPanel.style.display="block";
-  }
-
- }catch(e){alert(e.message);}
-};
-
-function loadVehicles(){
+function load(){
  db.collection("vehicles").onSnapshot(snap=>{
   list.innerHTML="";
   snap.forEach(doc=>{
-   const v = doc.data();
-   list.innerHTML += `<div class="card">${v.plaka} - ${v.km}</div>`;
-  });
- });
+   let v=doc.data();
+   list.innerHTML+=`<div class="card">${v.plaka} - ${v.km}</div>`;
+  })
+ })
 }
+load();
 
 async function addVehicle(){
  await db.collection("vehicles").add({
@@ -100,25 +68,15 @@ async function addVehicle(){
 }
 
 async function addUser(){
- const usernameVal=newUser.value;
+ const email=newUser.value+"@app.com";
  const pass=newPass.value;
- const email=usernameVal+"@app.com";
-
- const user=await auth.createUserWithEmailAndPassword(email,pass);
-
- await db.collection("users").doc(user.user.uid).set({
-  username:usernameVal,
+ let u=await auth.createUserWithEmailAndPassword(email,pass);
+ await db.collection("users").doc(u.user.uid).set({
+  username:newUser.value,
   email:email,
   role:"editor"
- });
-
- alert("Kullanıcı eklendi");
-}
-</script>
-
-<script>
-if('serviceWorker' in navigator){
- navigator.serviceWorker.register('./sw.js');
+ })
+ alert("ok");
 }
 </script>
 
