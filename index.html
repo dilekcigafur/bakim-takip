@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Bakım Takip PRO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{background:#0a0c0f;color:#fff;font-family:Arial;margin:0;padding:20px}
+.card{background:#111;padding:15px;margin:10px 0;border-radius:10px}
+input,button{padding:10px;margin:5px;border-radius:6px;border:none}
+button{background:#f0a500;color:black;font-weight:bold}
+</style>
+</head>
+<body>
+
+<h2>🚛 Bakım Takip PRO</h2>
+
+<div class="card">
+<h3>Araç Ekle</h3>
+<input id="plaka" placeholder="Plaka">
+<input id="km" placeholder="KM">
+<button onclick="addVehicle()">Ekle</button>
+</div>
+
+<div class="card">
+<h3>Araç Listesi</h3>
+<div id="list"></div>
+</div>
+
+<div class="card">
+<h3>Admin Panel</h3>
+<input id="newUser" placeholder="username">
+<input id="newPass" placeholder="şifre">
+<button onclick="addUser()">Kullanıcı Ekle</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDgh520cc3hiSMxY33Vo-DV688KcY1U4W0",
+  authDomain: "ab-a7b7e.firebaseapp.com",
+  projectId: "ab-a7b7e",
+  storageBucket: "ab-a7b7e.firebasestorage.app",
+  messagingSenderId: "13666536104",
+  appId: "1:13666536104:web:9a1595ee348c52089e509d"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+function load(){
+ db.collection("vehicles").onSnapshot(snap=>{
+  list.innerHTML="";
+  snap.forEach(doc=>{
+   let v=doc.data();
+   list.innerHTML+=`<div class="card">${v.plaka} - ${v.km}</div>`;
+  })
+ })
+}
+load();
+
+async function addVehicle(){
+ await db.collection("vehicles").add({
+  plaka:plaka.value,
+  km:Number(km.value)
+ });
+}
+
+async function addUser(){
+ const email=newUser.value+"@app.com";
+ const pass=newPass.value;
+ let u=await auth.createUserWithEmailAndPassword(email,pass);
+ await db.collection("users").doc(u.user.uid).set({
+  username:newUser.value,
+  email:email,
+  role:"editor"
+ })
+ alert("Kullanıcı eklendi");
+}
+</script>
+
+</body>
+</html>
