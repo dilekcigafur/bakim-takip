@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
@@ -6,9 +7,8 @@
 <title>KAMYON BAKIM TAKİP SİSTEMİ</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 :root{--bg:#0a0c0f;--surface:#111318;--surface2:#181c24;--border:#1e2430;--accent:#f0a500;--text:#d4dbe8;--text-dim:#5a6478;--text-muted:#2e3545;--green:#00c97a;--red:#ff4444;--blue:#2e9cff;--orange:#ff8c00;--purple:#9b59ff;}
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -140,26 +140,23 @@ body{background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",sans-ser
     <div class="lf"><label>Şifre</label><input type="password" id="lp" placeholder="••••••••"></div>
     <button class="lbtn" id="lbtn">GİRİŞ YAP</button>
     <div class="lerr" id="lerr">Kullanıcı adı veya şifre yanlış</div>
-    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);text-align:center;">
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);text-align:center;">
       <span style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--text-dim)">Hesabınız yok mu?</span>
       <button onclick="showRegister()" style="background:none;border:none;color:var(--accent);font-family:IBM Plex Mono,monospace;font-size:10px;cursor:pointer;margin-left:6px;text-decoration:underline;">KAYIT OL</button>
     </div>
   </div>
 </div>
-
-<div id="register" style="position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;flex-direction:column;gap:32px;z-index:1001;">
+<div id="register" style="position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;flex-direction:column;gap:28px;z-index:1001;">
   <div class="logo">KAMYON BAKIM<span>YENİ KAYIT TALEBİ</span></div>
   <div class="lbox">
     <h2>// KAYIT TALEBİ</h2>
-    <div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--text-dim);margin-bottom:16px;line-height:1.8;">
-      Talebiniz yöneticiye iletilecek.<br>Onaylandıktan sonra giriş yapabilirsiniz.
-    </div>
-    <div class="lf"><label>Kullanıcı Adı</label><input type="text" id="ru" placeholder="ad_soyad" autocomplete="off"></div>
+    <p style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--text-dim);margin-bottom:14px;line-height:1.8;">Talebiniz yöneticiye iletilecektir.<br>Onaylandıktan sonra giriş yapabilirsiniz.</p>
+    <div class="lf"><label>Kullanıcı Adı</label><input type="text" id="ru" placeholder="kullanici_adi" autocomplete="off"></div>
     <div class="lf"><label>Şifre</label><input type="password" id="rp" placeholder="••••••••"></div>
     <div class="lf"><label>Şifre Tekrar</label><input type="password" id="rp2" placeholder="••••••••"></div>
     <button class="lbtn" id="rbtn">TALEBİ GÖNDER</button>
     <div class="lerr" id="rerr"></div>
-    <div style="margin-top:14px;text-align:center;">
+    <div style="margin-top:12px;text-align:center;">
       <button onclick="showLogin()" style="background:none;border:none;color:var(--text-dim);font-family:IBM Plex Mono,monospace;font-size:10px;cursor:pointer;text-decoration:underline;">← GİRİŞE DÖN</button>
     </div>
   </div>
@@ -942,53 +939,49 @@ function renderUList() {
   const users = Object.values(localStore.users);
   const pending = users.filter(u => u.role !== 'admin' && !u.approved);
   const approved = users.filter(u => u.role === 'admin' || u.approved);
-  let html = '';
-  if (pending.length > 0) {
-    html += '<div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:1px;color:var(--orange);text-transform:uppercase;margin-bottom:6px;margin-top:2px">⏳ ONAY BEKLEYENLER (' + pending.length + ')</div>';
-    html += pending.map(u => '<div class="ui" style="border-color:rgba(255,140,0,0.5);">' +
+  let h = '';
+  if(pending.length > 0) {
+    h += '<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--orange);text-transform:uppercase;margin-bottom:6px">⏳ ONAY BEKLEYENLER (' + pending.length + ')</div>';
+    h += pending.map(u => '<div class="ui" style="border-color:rgba(255,140,0,0.5)">' +
       '<div class="un">' + u.username + '</div>' +
       '<div class="ur" style="color:var(--orange);border-color:var(--orange)">BEKLEMEDE</div>' +
       '<button class="dub" style="border-color:var(--green);color:var(--green)" onclick="approveUser('' + u.username + '','viewer')">✓ İZL</button>' +
       '<button class="dub" style="border-color:var(--blue);color:var(--blue)" onclick="approveUser('' + u.username + '','editor')">✓ EDİT</button>' +
-      '<button class="dub" style="border-color:var(--red);color:var(--red)" onclick="rejectUser('' + u.username + '')">✕ RED</button>' +
+      '<button class="dub" style="border-color:var(--red);color:var(--red)" onclick="rejectUser('' + u.username + '')">✕</button>' +
       '</div>').join('');
-    html += '<div style="height:10px"></div>';
+    h += '<div style="height:8px"></div>';
   }
-  html += '<div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;margin-bottom:6px">✅ ONAYLANMIŞ KULLANICILAR</div>';
-  html += approved.map(u => {
+  h += '<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--text-dim);text-transform:uppercase;margin-bottom:6px">✅ ONAYLANMIŞ</div>';
+  h += approved.map(u => {
     const rl = u.role==='admin'?'ADMİN':u.role==='editor'?'EDİTÖR':'İZLEYİCİ';
     const rc = u.role==='admin'?'ra':u.role==='editor'?'re':'rv';
-    return '<div class="ui">' +
-      '<div class="un">' + u.username + '</div>' +
-      '<div class="ur ' + rc + '">' + rl + '</div>' +
+    return '<div class="ui"><div class="un">' + u.username + '</div><div class="ur ' + rc + '">' + rl + '</div>' +
       (u.username!=='admin' ?
         '<button class="dub" onclick="changeRole('' + u.username + '')">ROL</button>' +
-        '<button class="dub" style="border-color:var(--red);color:var(--red)" onclick="deleteUser('' + u.username + '')">SİL</button>'
-        : '') +
-      '</div>';
+        '<button class="dub" style="border-color:var(--red);color:var(--red)" onclick="delUser('' + u.username + '')">SİL</button>'
+      : '') + '</div>';
   }).join('');
-  el.innerHTML = html;
+  el.innerHTML = h;
 }
-
-async function approveUser(username, role) {
-  const u = {...localStore.users[username], approved:true, role:role};
-  await db.collection('users').doc(username).set(u);
-  toast(username + ' onaylandı → ' + (role==='editor'?'Editör':'İzleyici'));
+async function approveUser(un, role) {
+  const u = {...localStore.users[un], approved:true, role:role};
+  await db.collection('users').doc(un).set(u);
+  toast(un + ' onaylandı → ' + (role==='editor'?'Editör':'İzleyici'));
 }
-async function rejectUser(username) {
-  if(!confirm(username + ' reddedilsin ve silinsin mi?')) return;
-  await db.collection('users').doc(username).delete();
-  toast(username + ' reddedildi');
+async function rejectUser(un) {
+  if(!confirm(un + ' reddedilsin mi?')) return;
+  await db.collection('users').doc(un).delete();
+  toast(un + ' reddedildi');
 }
-async function changeRole(username) {
-  const u = localStore.users[username];
-  const newRole = u.role==='viewer'?'editor':'viewer';
-  await db.collection('users').doc(username).set({...u, role:newRole});
-  toast(username + ' → ' + (newRole==='editor'?'Editör':'İzleyici'));
+async function changeRole(un) {
+  const u = localStore.users[un];
+  const nr = u.role==='viewer'?'editor':'viewer';
+  await db.collection('users').doc(un).set({...u, role:nr});
+  toast(un + ' → ' + (nr==='editor'?'Editör':'İzleyici'));
 }
-async function deleteUser(username) {
-  if(!confirm(username + ' silinsin mi?')) return;
-  await db.collection('users').doc(username).delete();
+async function delUser(un) {
+  if(!confirm(un + ' silinsin mi?')) return;
+  await db.collection('users').doc(un).delete();
   toast('Silindi');
 }
 
@@ -1062,45 +1055,38 @@ document.getElementById('aubtn').onclick = async function() {
 
 // ===== KAYIT SİSTEMİ =====
 function showRegister() {
-  document.getElementById('login').style.display = 'none';
-  document.getElementById('register').style.display = 'flex';
-  ['ru','rp','rp2'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('rerr').style.display = 'none';
+  document.getElementById('login').style.display='none';
+  document.getElementById('register').style.display='flex';
+  ['ru','rp','rp2'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('rerr').style.display='none';
 }
 function showLogin() {
-  document.getElementById('register').style.display = 'none';
-  document.getElementById('login').style.display = 'flex';
+  document.getElementById('register').style.display='none';
+  document.getElementById('login').style.display='flex';
 }
-document.getElementById('rbtn').onclick = async function() {
-  const un = document.getElementById('ru').value.trim();
-  const pw = document.getElementById('rp').value;
-  const pw2 = document.getElementById('rp2').value;
-  const err = document.getElementById('rerr');
-  if(!un||!pw){ err.textContent='Kullanıcı adı ve şifre gerekli'; err.style.display='block'; return; }
-  if(pw!==pw2){ err.textContent='Şifreler eşleşmiyor'; err.style.display='block'; return; }
-  if(un.length<3){ err.textContent='Kullanıcı adı en az 3 karakter'; err.style.display='block'; return; }
-  if(localStore.users[un]){ err.textContent='Bu kullanıcı adı zaten kullanımda'; err.style.display='block'; return; }
-  try {
-    await db.collection('users').doc(un).set({
-      username:un, password:pw, role:'viewer', approved:false,
-      kayit_tarihi: new Date().toISOString().split('T')[0]
-    });
-    document.getElementById('register').style.display = 'none';
-    document.getElementById('login').style.display = 'flex';
-    const lerr = document.getElementById('lerr');
-    lerr.textContent = '✓ Kayıt talebiniz alındı. Yönetici onayından sonra giriş yapabilirsiniz.';
-    lerr.style.color = 'var(--green)';
-    lerr.style.display = 'block';
-    setTimeout(() => {
-      lerr.style.display='none';
-      lerr.style.color='var(--red)';
-      lerr.textContent='Kullanıcı adı veya şifre yanlış';
-    }, 6000);
-  } catch(e) { err.textContent='Hata: '+e.message; err.style.display='block'; }
-};
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('rbtn').onclick = async function() {
+    const un=document.getElementById('ru').value.trim(), pw=document.getElementById('rp').value, pw2=document.getElementById('rp2').value;
+    const err=document.getElementById('rerr');
+    if(!un||!pw){err.textContent='Ad ve şifre gerekli';err.style.display='block';return;}
+    if(pw!==pw2){err.textContent='Şifreler eşleşmiyor';err.style.display='block';return;}
+    if(un.length<3){err.textContent='En az 3 karakter olmalı';err.style.display='block';return;}
+    if(localStore.users[un]){err.textContent='Bu kullanıcı adı kullanımda';err.style.display='block';return;}
+    try {
+      await db.collection('users').doc(un).set({username:un,password:pw,role:'viewer',approved:false,kayit_tarihi:new Date().toISOString().split('T')[0]});
+      document.getElementById('register').style.display='none';
+      document.getElementById('login').style.display='flex';
+      const lerr=document.getElementById('lerr');
+      lerr.textContent='✓ Kayıt talebiniz alındı. Yönetici onayından sonra giriş yapabilirsiniz.';
+      lerr.style.color='var(--green)'; lerr.style.display='block';
+      setTimeout(()=>{lerr.style.display='none';lerr.style.color='var(--red)';lerr.textContent='Kullanıcı adı veya şifre yanlış';},6000);
+    } catch(e){err.textContent='Hata: '+e.message;err.style.display='block';}
+  };
+});
 
 // ===== BAŞLAT =====
 initFirebase();
 </script>
+
 </body>
 </html>
